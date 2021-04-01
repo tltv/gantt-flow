@@ -1,0 +1,24 @@
+# Built and downloaded folders
+target
+
+# Intellij Idea
+.idea
+*.iml
+
+# Eclipse
+.project
+.settings
+.classpath
+
+**/package-lock.json
+**/bower_components/
+
+.npmrc
+package.json
+webpack*.js
+types.d.ts
+pnpmfile.js
+pnpm-lock.yaml
+
+**/frontend/generated/
+/node_modules/

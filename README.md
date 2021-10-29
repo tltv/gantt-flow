@@ -1,6 +1,6 @@
 # Gantt Flow addon
 
-Vaadin 19 Flow component project root.
+Vaadin 21 Flow component project root.
 
 
 ## Development instructions

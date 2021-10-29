@@ -13,22 +13,28 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.vaadin.tltv.gantt.element.StepElement;
+import org.vaadin.tltv.gantt.event.GanttClickEvent;
+import org.vaadin.tltv.gantt.event.StepClickEvent;
+import org.vaadin.tltv.gantt.event.StepMoveEvent;
+import org.vaadin.tltv.gantt.event.StepResizeEvent;
 import org.vaadin.tltv.gantt.model.GanttStep;
 import org.vaadin.tltv.gantt.model.Resolution;
 import org.vaadin.tltv.gantt.model.Step;
 import org.vaadin.tltv.gantt.util.GanttUtil;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
+import com.vaadin.flow.shared.Registration;
 
 import elemental.json.JsonArray;
 import elemental.json.impl.JreJsonFactory;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.4")
+@NpmPackage(value = "tltv-gantt-element", version = "^1.0.6")
 @NpmPackage(value = "tltv-timeline-element", version = "^1.0.12")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 public class Gantt extends Component implements HasSize {
@@ -195,6 +201,11 @@ public class Gantt extends Component implements HasSize {
         return uidList.indexOf(stepUid);
     }
     
+    public Step getStep(String uid) {
+    	return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
+				.map(StepElement::getModel).orElse(null);
+    }
+    
 	/**
      * Ensures that given step has UID. If not, then generates one.
      */
@@ -219,4 +230,20 @@ public class Gantt extends Component implements HasSize {
     	getElement().getStyle().set("--gantt-element-height", Objects.requireNonNullElse(height, "auto"));
     	getElement().callJsFunction("updateSize");
     }
+    
+	public Registration addGanttClickListener(ComponentEventListener<GanttClickEvent> listener) {
+		return addListener(GanttClickEvent.class, listener);
+	}
+	
+	public Registration addStepClickListener(ComponentEventListener<StepClickEvent> listener) {
+		return addListener(StepClickEvent.class, listener);
+	}
+	
+	public Registration addStepMoveListener(ComponentEventListener<StepMoveEvent> listener) {
+		return addListener(StepMoveEvent.class, listener);
+	}
+	
+	public Registration addStepResizeListener(ComponentEventListener<StepResizeEvent> listener) {
+		return addListener(StepResizeEvent.class, listener);
+	}
 }

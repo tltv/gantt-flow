@@ -14,17 +14,25 @@ public class StepElement extends Component {
 
 	private final String uid;
 	
-	public StepElement(Step data) {
-		this.uid = data.getUid();
+	private Step model;
+	
+	public StepElement(Step model) {
+		this.model = model;
+		this.uid = model.getUid();
 		
-		setCaption(data.getCaption());
-		setBackgroundColor(data.getBackgroundColor());
-		setStartDateTime(data.getStartDate());
-		setEndDateTime(data.getEndDate());
+		getElement().setProperty("uid", this.uid);
+		setCaption(model.getCaption());
+		setBackgroundColor(model.getBackgroundColor());
+		setStartDateTime(model.getStartDate());
+		setEndDateTime(model.getEndDate());
 	}
 	
 	public String getUid() {
 		return uid;
+	}
+	
+	public Step getModel() {
+		return model;
 	}
 
 	public void setCaption(String caption) {

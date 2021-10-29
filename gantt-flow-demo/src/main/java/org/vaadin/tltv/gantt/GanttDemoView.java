@@ -22,6 +22,7 @@ import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -77,6 +78,8 @@ public class GanttDemoView extends VerticalLayout {
 		gantt.addStep(step1);
 		gantt.addStep(step2);
 		
+		gantt.addGanttClickListener(event -> Notification.show("Clicked at index: " + event.getIndex()));
+		gantt.addStepClickListener(event -> Notification.show("Clicked step " + event.getStep().getCaption()));
 		return gantt;
 	}
 	

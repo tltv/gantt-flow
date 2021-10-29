@@ -28,8 +28,8 @@ import elemental.json.JsonArray;
 import elemental.json.impl.JreJsonFactory;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.3")
-@NpmPackage(value = "tltv-timeline-element", version = "^1.0.11")
+@NpmPackage(value = "tltv-gantt-element", version = "^1.0.4")
+@NpmPackage(value = "tltv-timeline-element", version = "^1.0.12")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 public class Gantt extends Component implements HasSize {
 
@@ -103,6 +103,30 @@ public class Gantt extends Component implements HasSize {
 		return getElement().getProperty("monthRowVisible", true);
 	}
 
+	public void setMovableSteps(boolean enabled) {
+		getElement().setProperty("movableSteps", enabled);
+	}
+	
+	public boolean isMovableSteps() {
+		return getElement().getProperty("movableSteps", true); 
+	}
+	
+	public void setResizableSteps(boolean enabled) {
+		getElement().setProperty("resizableSteps", enabled);
+	}
+	
+	public boolean isResizableSteps() {
+		return getElement().getProperty("resizableSteps", true); 
+	}
+	
+	public void setMovableStepsBetweenRows(boolean enabled) {
+		getElement().setProperty("movableStepsBetweenRows", enabled);
+	}
+	
+	public boolean isMovableStepsBetweenRows() {
+		return getElement().getProperty("movableStepsBetweenRows", true); 
+	}
+	
 	public void addStep(Step step) {
 		getElement().appendChild(new StepElement(ensureUID(step)).getElement());
 	}
@@ -182,5 +206,17 @@ public class Gantt extends Component implements HasSize {
             step.setUid(UUID.randomUUID().toString());
         }
         return step;
+    }
+    
+    @Override
+    public void setWidth(String width) {
+    	getElement().getStyle().set("--gantt-element-width", Objects.requireNonNullElse(width, "auto"));
+    	getElement().callJsFunction("updateSize");
+    }
+    
+    @Override
+    public void setHeight(String height) {
+    	getElement().getStyle().set("--gantt-element-height", Objects.requireNonNullElse(height, "auto"));
+    	getElement().callJsFunction("updateSize");
     }
 }

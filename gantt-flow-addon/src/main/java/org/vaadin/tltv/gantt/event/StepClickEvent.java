@@ -1,7 +1,7 @@
 package org.vaadin.tltv.gantt.event;
 
 import org.vaadin.tltv.gantt.Gantt;
-import org.vaadin.tltv.gantt.model.Step;
+import org.vaadin.tltv.gantt.model.GanttStep;
 
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.DomEvent;
@@ -17,7 +17,8 @@ public class StepClickEvent extends ComponentEvent<Gantt> {
 		this.uid = uid;
 	}
 
-	public Step getStep() {
-		return getSource().getStep(uid);
+	public GanttStep getAnyStep() {
+		return getSource().getAnyStep(uid);
 	}
+	
 }

@@ -20,6 +20,7 @@ import org.vaadin.tltv.gantt.event.StepResizeEvent;
 import org.vaadin.tltv.gantt.model.GanttStep;
 import org.vaadin.tltv.gantt.model.Resolution;
 import org.vaadin.tltv.gantt.model.Step;
+import org.vaadin.tltv.gantt.model.SubStep;
 import org.vaadin.tltv.gantt.util.GanttUtil;
 
 import com.vaadin.flow.component.Component;
@@ -145,6 +146,14 @@ public class Gantt extends Component implements HasSize {
         }
     }
 
+	public void moveStep(int toIndex, GanttStep anyStep) {
+		if(anyStep.isSubstep()) {
+			// TODO
+		} else {
+			moveStep(toIndex, (Step) anyStep);
+		}
+	}
+	
     public void moveStep(int toIndex, Step step) {
         if (!contains(step)) {
             return;
@@ -185,7 +194,27 @@ public class Gantt extends Component implements HasSize {
     public Stream<StepElement> getStepElements() {
 		return getChildren().filter(child -> child instanceof StepElement).map(StepElement.class::cast);
 	}
+    
+	public Stream<StepElement> getFlatStepElements() {
+		Stream.Builder<StepElement> streamBuilder = Stream.builder();
+		getStepElements().forEach(step -> {
+			streamBuilder.add(step);
+			step.getChildren().filter(child -> child instanceof StepElement).map(StepElement.class::cast)
+					.forEach(streamBuilder::add);
+		});
+		return streamBuilder.build();
+	}
+    
+    public Stream<StepElement> getSubStepElements() {
+		return getStepElements().flatMap(step -> step.getChildren().filter(child -> child instanceof StepElement))
+				.map(StepElement.class::cast);
+	}
 
+    public boolean contains(GanttStep targetStep) {
+        return getFlatStepElements()
+        		.anyMatch(step -> step.getUid().equals(targetStep.getUid()));
+    }
+    
 	public boolean contains(Step targetStep) {
         return getChildren()
         		.filter(child -> child instanceof StepElement).map(StepElement.class::cast)
@@ -197,12 +226,26 @@ public class Gantt extends Component implements HasSize {
 	}
 	
     public int indexOf(String stepUid) {
+    	GanttStep step = getAnyStep(stepUid);
+    	if(step.isSubstep()) {
+    		step = ((SubStep) step).getOwner();
+    	}
     	List<String> uidList = getStepElements().map(StepElement::getUid).collect(Collectors.toList());
-        return uidList.indexOf(stepUid);
+        return uidList.indexOf(step.getUid());
     }
     
-    public Step getStep(String uid) {
-    	return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
+    public SubStep getSubStep(String uid) {
+		return getSubStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
+				.map(StepElement::getModel).map(SubStep.class::cast).orElse(null);
+	}
+    
+	public Step getStep(String uid) {
+		return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
+				.map(StepElement::getModel).map(Step.class::cast).orElse(null);
+	}
+    
+    public GanttStep getAnyStep(String uid) {
+    	return getFlatStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
 				.map(StepElement::getModel).orElse(null);
     }
     

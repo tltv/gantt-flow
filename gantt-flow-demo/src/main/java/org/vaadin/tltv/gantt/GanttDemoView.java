@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -79,7 +80,24 @@ public class GanttDemoView extends VerticalLayout {
 		gantt.addStep(step2);
 		
 		gantt.addGanttClickListener(event -> Notification.show("Clicked at index: " + event.getIndex()));
-		gantt.addStepClickListener(event -> Notification.show("Clicked step " + event.getStep().getCaption()));
+		gantt.addStepClickListener(event -> Notification.show("Clicked step " + event.getAnyStep().getCaption()));
+		gantt.addStepMoveListener(event -> {
+			Notification.show("Moved step : " + event.getAnyStep().getCaption());
+			
+			event.getAnyStep().setStartDate(event.getStart());
+			event.getAnyStep().setEndDate(event.getEnd());
+			
+			if (!Objects.equals(event.getAnyStep().getUid(), event.getNewUid())) {
+				gantt.moveStep(gantt.indexOf(event.getNewUid()), event.getAnyStep());
+			}
+		});
+		gantt.addStepResizeListener(event -> {
+			Notification.show("Resized step : " + event.getAnyStep().getCaption());
+			
+			event.getAnyStep().setStartDate(event.getStart());
+			event.getAnyStep().setEndDate(event.getStart());
+		});
+		
 		return gantt;
 	}
 	

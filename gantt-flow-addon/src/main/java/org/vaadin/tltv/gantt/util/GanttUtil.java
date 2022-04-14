@@ -10,7 +10,7 @@ import org.vaadin.tltv.gantt.model.Resolution;
 
 public class GanttUtil {
 
-	private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH");
+	private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH[':'mm':'ss'.'nnn'Z']");
 
 	public static String formatDateTime(TemporalAccessor temporal) {
 		return dateTimeFormatter.format(temporal);
@@ -18,6 +18,10 @@ public class GanttUtil {
 
 	public static TemporalAccessor parseDateTime(CharSequence text) {
 		return dateTimeFormatter.parse(text);
+	}
+	
+	public static LocalDateTime parseLocalDateTime(CharSequence text) {
+		return LocalDateTime.from(parseDateTime(text));
 	}
 
 	public static LocalDateTime resetTimeToMin(LocalDateTime dateTime, Resolution resolution) {

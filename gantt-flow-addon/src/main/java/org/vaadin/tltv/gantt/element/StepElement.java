@@ -2,8 +2,8 @@ package org.vaadin.tltv.gantt.element;
 
 import java.time.LocalDateTime;
 
+import org.vaadin.tltv.gantt.model.GanttStep;
 import org.vaadin.tltv.gantt.model.Resolution;
-import org.vaadin.tltv.gantt.model.Step;
 import org.vaadin.tltv.gantt.util.GanttUtil;
 
 import com.vaadin.flow.component.Component;
@@ -14,9 +14,9 @@ public class StepElement extends Component {
 
 	private final String uid;
 	
-	private Step model;
+	private GanttStep model;
 	
-	public StepElement(Step model) {
+	public StepElement(GanttStep model) {
 		this.model = model;
 		this.uid = model.getUid();
 		
@@ -31,7 +31,7 @@ public class StepElement extends Component {
 		return uid;
 	}
 	
-	public Step getModel() {
+	public GanttStep getModel() {
 		return model;
 	}
 
@@ -57,7 +57,7 @@ public class StepElement extends Component {
 	}
 
 	public LocalDateTime getStartDateTime() {
-		return LocalDateTime.from(GanttUtil.parseDateTime(getElement().getAttribute("start")));
+		return GanttUtil.parseLocalDateTime(getElement().getAttribute("start"));
 	}
 
 	public void setEndDateTime(LocalDateTime endDateTime) {
@@ -66,7 +66,7 @@ public class StepElement extends Component {
 	}
 
 	public LocalDateTime getEndDateTime() {
-		return LocalDateTime.from(GanttUtil.parseDateTime(getElement().getAttribute("end")));
+		return GanttUtil.parseLocalDateTime(getElement().getAttribute("end"));
 	}
 
 	public void removeFromParent() {

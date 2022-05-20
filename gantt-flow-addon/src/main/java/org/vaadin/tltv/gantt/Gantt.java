@@ -1,8 +1,10 @@
 package org.vaadin.tltv.gantt;
 
 import java.text.DateFormatSymbols;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
@@ -138,6 +140,12 @@ public class Gantt extends Component implements HasSize {
 		getElement().appendChild(new StepElement(ensureUID(step)).getElement());
 	}
 	
+	public void addSubStep(SubStep subStep) {
+		StepElement ownerStepElement = getStepElements().collect(Collectors.toList())
+				.get(indexOf(subStep.getOwner().getUid()));
+		ownerStepElement.getElement().appendChild(new StepElement(ensureUID(subStep)).getElement());
+	}
+	
 	public void addStep(int index, Step step) {
         if (contains(ensureUID(step))) {
             moveStep(index, step);
@@ -148,7 +156,7 @@ public class Gantt extends Component implements HasSize {
 
 	public void moveStep(int toIndex, GanttStep anyStep) {
 		if(anyStep.isSubstep()) {
-			// TODO
+			moveSubStep(toIndex, (SubStep) anyStep);
 		} else {
 			moveStep(toIndex, (Step) anyStep);
 		}
@@ -160,13 +168,33 @@ public class Gantt extends Component implements HasSize {
         }
         String targetStepUid = getStepElements().collect(Collectors.toList()).get(toIndex).getUid();
         Step moveStep = step;
-        if (targetStepUid.equals(moveStep.getUid())) {
-            return;
+        if (!targetStepUid.equals(moveStep.getUid())) {
+        	var subStepEements = getSubStepElements(moveStep.getUid());
+        	getStepElements().filter(item -> item.getUid().equals(moveStep.getUid())).findFirst().ifPresent(StepElement::removeFromParent);
+        	StepElement stepElement = new StepElement(moveStep);
+        	subStepEements.forEach(subStepElement -> stepElement.getElement().appendChild(subStepElement.getElement()));
+        	getElement().insertChild(indexOf(targetStepUid), stepElement.getElement());
         }
-        getStepElements().filter(item -> item.getUid().equals(moveStep.getUid())).findFirst().ifPresent(StepElement::removeFromParent);
-        getElement().insertChild(indexOf(targetStepUid), new StepElement(moveStep).getElement());
+        updateSubStepsByMovedOwner(moveStep.getUid());
     }
-	
+    
+    public void moveSubStep(int toIndex, SubStep subStep) {
+		if (!contains(subStep)) {
+			return;
+		}
+		String targetStepUid = getStepElements().collect(Collectors.toList()).get(toIndex).getUid();
+		StepElement stepElement = getStepElement(targetStepUid);
+		Step moveStep = subStep.getOwner();
+		if (!targetStepUid.equals(moveStep.getUid())) {
+			getSubStepElements().filter(item -> item.getUid().equals(subStep.getUid())).findFirst()
+					.ifPresent(StepElement::removeFromParent);
+			subStep.setOwner(getStep(targetStepUid));
+			stepElement.getElement().appendChild(new StepElement(subStep).getElement());
+		}
+		subStep.updateOwnerDatesBySubStep();
+		stepElement.refresh();
+    }
+
 	private void setupByLocale() {
 		setArrayProperty("monthNames", new DateFormatSymbols(getLocale()).getMonths());
 		setArrayProperty("weekdayNames", new DateFormatSymbols(getLocale()).getWeekdays());
@@ -191,6 +219,10 @@ public class Gantt extends Component implements HasSize {
 		return GanttUtil.resetTimeToMax(dateTime, getResolution(), exclusive);
 	}
 	
+	public StepElement getStepElement(String uid) {
+		return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst().orElse(null);
+	}
+	
     public Stream<StepElement> getStepElements() {
 		return getChildren().filter(child -> child instanceof StepElement).map(StepElement.class::cast);
 	}
@@ -205,20 +237,41 @@ public class Gantt extends Component implements HasSize {
 		return streamBuilder.build();
 	}
     
+	public Stream<StepElement> getSubStepElements(String forStepUid) {
+		StepElement stepEl = getStepElement(forStepUid);
+		if (stepEl != null) {
+			return stepEl.getChildren().filter(child -> child instanceof StepElement).map(StepElement.class::cast);
+		}
+		return Stream.empty();
+	}
+	
     public Stream<StepElement> getSubStepElements() {
 		return getStepElements().flatMap(step -> step.getChildren().filter(child -> child instanceof StepElement))
 				.map(StepElement.class::cast);
 	}
 
+    public boolean contains(String targetUid) {
+        return getFlatStepElements()
+        		.anyMatch(step -> step.getUid().equals(targetUid));
+    }
+    
     public boolean contains(GanttStep targetStep) {
         return getFlatStepElements()
         		.anyMatch(step -> step.getUid().equals(targetStep.getUid()));
     }
     
 	public boolean contains(Step targetStep) {
-        return getChildren()
+		return contains(getStepElements(), targetStep.getUid());
+    }
+	
+	public boolean contains(SubStep targetSubStep) {
+        return contains(getSubStepElements(), targetSubStep.getUid());
+    }
+	
+	private boolean contains(Stream<StepElement> stream, String targetUid) {
+        return stream
         		.filter(child -> child instanceof StepElement).map(StepElement.class::cast)
-        		.anyMatch(step -> step.getUid().equals(targetStep.getUid()));
+        		.anyMatch(step -> step.getUid().equals(targetUid));
     }
     
 	public int indexOf(Step step) {
@@ -248,6 +301,31 @@ public class Gantt extends Component implements HasSize {
     	return getFlatStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
 				.map(StepElement::getModel).orElse(null);
     }
+
+    public void updateSubStepsByMovedOwner(String stepUid) {
+    	Step step = getStep(stepUid);
+		// update sub-steps by moved owner
+		LocalDateTime previousStart = getSubStepElements(stepUid).map(StepElement::getModel)
+				.map(GanttStep::getStartDate).min(Comparator.naturalOrder()).orElse(step.getStartDate());
+		Duration delta = Duration.between(previousStart, step.getStartDate());
+		getSubStepElements(stepUid).forEach(substep -> {
+			substep.getModel().setStartDate(substep.getModel().getStartDate().plus(delta));
+			substep.getModel().setEndDate(substep.getModel().getEndDate().plus(delta));
+			substep.refresh();
+		});
+    }
+    
+	/**
+	 * Refresh target step element if it exists.
+	 * 
+	 * @param uid Target step UID
+	 */
+	public void refresh(String uid) {
+		var stepElement = getStepElement(uid);
+		if (stepElement != null) {
+			stepElement.refresh();
+		}
+	}
     
 	/**
      * Ensures that given step has UID. If not, then generates one.

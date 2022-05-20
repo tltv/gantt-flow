@@ -10,14 +10,21 @@ import com.vaadin.flow.component.EventData;
 public class GanttClickEvent extends ComponentEvent<Gantt> {
 
 	private final Integer index;
+	private final Integer button;
 	
-	public GanttClickEvent(Gantt source, boolean fromClient, @EventData("event.detail.index") Integer index) {
+	public GanttClickEvent(Gantt source, boolean fromClient, 
+			@EventData("event.detail.index") Integer index,
+			@EventData("event.detail.event.button") Integer button) {
 		super(source, fromClient);
 		this.index = index;
+		this.button = button;
 	}
 
 	public Integer getIndex() {
 		return index;
 	}
 
+	public Integer getButton() {
+		return button;
+	}
 }

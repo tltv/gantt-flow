@@ -3,6 +3,9 @@ package org.vaadin.tltv.gantt.model;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Abstract base class of step inside {@link Gantt} component.
+ */
 public abstract class GanttStep {
 
     private Integer identifier;

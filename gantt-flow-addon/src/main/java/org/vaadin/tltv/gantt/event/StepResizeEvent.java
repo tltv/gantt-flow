@@ -28,7 +28,7 @@ public class StepResizeEvent extends ComponentEvent<Gantt> {
 	}
 
 	public GanttStep getAnyStep() {
-		return getSource().getStep(uid);
+		return getSource().getAnyStep(uid);
 	}
 	
 	public LocalDateTime getStart() {

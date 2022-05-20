@@ -21,6 +21,10 @@ public class StepElement extends Component {
 		this.uid = model.getUid();
 		
 		getElement().setProperty("uid", this.uid);
+		refresh();
+	}
+	
+	public void refresh() {
 		setCaption(model.getCaption());
 		setBackgroundColor(model.getBackgroundColor());
 		setStartDateTime(model.getStartDate());

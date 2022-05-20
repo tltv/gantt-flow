@@ -14,8 +14,10 @@ import java.util.TimeZone;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.vaadin.tltv.gantt.event.GanttClickEvent;
 import org.vaadin.tltv.gantt.model.Resolution;
 import org.vaadin.tltv.gantt.model.Step;
+import org.vaadin.tltv.gantt.model.SubStep;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -75,30 +77,62 @@ public class GanttDemoView extends VerticalLayout {
 		step2.setBackgroundColor("#a3d9ff");
 		step2.setStartDate(LocalDateTime.of(2020, 4, 7, 0, 0));
 		step2.setEndDate(LocalDateTime.of(2020, 4, 11, 0, 0));
+		
+		SubStep subStepA = new SubStep(step2);
+		subStepA.setCaption("R");
+		subStepA.setBackgroundColor("red");
+		subStepA.setStartDate(LocalDateTime.of(2020, 4, 7, 0, 0));
+		subStepA.setEndDate(LocalDateTime.of(2020, 4, 8, 0, 0));
+		SubStep subStepB = new SubStep(step2);
+		subStepB.setCaption("G");
+		subStepB.setBackgroundColor("lightgreen");
+		subStepB.setStartDate(LocalDateTime.of(2020, 4, 8, 0, 0));
+		subStepB.setEndDate(LocalDateTime.of(2020, 4, 9, 0, 0));
+		SubStep subStepC = new SubStep(step2);
+		subStepC.setCaption("B");
+		subStepC.setBackgroundColor("lightblue");
+		subStepC.setStartDate(LocalDateTime.of(2020, 4, 9, 0, 0));
+		subStepC.setEndDate(LocalDateTime.of(2020, 4, 11, 0, 0));
 
 		gantt.addStep(step1);
 		gantt.addStep(step2);
 		
-		gantt.addGanttClickListener(event -> Notification.show("Clicked at index: " + event.getIndex()));
+		gantt.addSubStep(subStepA);
+		gantt.addSubStep(subStepB);
+		gantt.addSubStep(subStepC);
+		
+		gantt.addGanttClickListener(this::onGanttBackgroundClick);
 		gantt.addStepClickListener(event -> Notification.show("Clicked step " + event.getAnyStep().getCaption()));
 		gantt.addStepMoveListener(event -> {
 			Notification.show("Moved step : " + event.getAnyStep().getCaption());
 			
+			// dates and position are not synchronized automatically to server side model
 			event.getAnyStep().setStartDate(event.getStart());
 			event.getAnyStep().setEndDate(event.getEnd());
 			
-			if (!Objects.equals(event.getAnyStep().getUid(), event.getNewUid())) {
-				gantt.moveStep(gantt.indexOf(event.getNewUid()), event.getAnyStep());
-			}
+			gantt.moveStep(gantt.indexOf(event.getNewUid()), event.getAnyStep());
 		});
 		gantt.addStepResizeListener(event -> {
 			Notification.show("Resized step : " + event.getAnyStep().getCaption());
 			
 			event.getAnyStep().setStartDate(event.getStart());
-			event.getAnyStep().setEndDate(event.getStart());
+			event.getAnyStep().setEndDate(event.getEnd());
+			
+			if(event.getAnyStep().isSubstep()) {
+				((SubStep) event.getAnyStep()).updateOwnerDatesBySubStep();
+				event.getSource().refresh(((SubStep) event.getAnyStep()).getOwner().getUid());
+			}
 		});
 		
 		return gantt;
+	}
+	
+	private void onGanttBackgroundClick(GanttClickEvent event) {
+		if(event.getButton() == 2) {
+			Notification.show("Clicked with mouse 2 at index: " + event.getIndex());
+		} else {
+			Notification.show("Clicked at index: " + event.getIndex());
+		}
 	}
 	
 	private Div buildControlPanel() {

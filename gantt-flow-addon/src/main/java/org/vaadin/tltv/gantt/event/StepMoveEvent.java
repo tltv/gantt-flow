@@ -30,6 +30,11 @@ public class StepMoveEvent extends ComponentEvent<Gantt> {
 		this.end = GanttUtil.parseLocalDateTime(end);
 	}
 
+	/**
+	 * Return moved step or sub step.
+	 * 
+	 * @return {@link GanttStep}
+	 */
 	public GanttStep getAnyStep() {
 		return getSource().getAnyStep(uid);
 	}

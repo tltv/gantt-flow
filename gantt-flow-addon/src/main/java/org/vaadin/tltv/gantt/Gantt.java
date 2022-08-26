@@ -9,6 +9,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -167,13 +168,18 @@ public class Gantt extends Component implements HasSize {
             return;
         }
         String targetStepUid = getStepElements().collect(Collectors.toList()).get(toIndex).getUid();
+        int fromIndex = indexOf(step);
         Step moveStep = step;
         if (!targetStepUid.equals(moveStep.getUid())) {
         	var subStepEements = getSubStepElements(moveStep.getUid());
-        	getStepElements().filter(item -> item.getUid().equals(moveStep.getUid())).findFirst().ifPresent(StepElement::removeFromParent);
+        	getStepElementOptional(moveStep.getUid()).ifPresent(StepElement::removeFromParent);
         	StepElement stepElement = new StepElement(moveStep);
         	subStepEements.forEach(subStepElement -> stepElement.getElement().appendChild(subStepElement.getElement()));
-        	getElement().insertChild(indexOf(targetStepUid), stepElement.getElement());
+        	if(fromIndex <= toIndex) {
+        		getElement().insertChild(indexOf(targetStepUid) + 1, stepElement.getElement());
+        	} else {
+        		getElement().insertChild(indexOf(targetStepUid), stepElement.getElement());
+        	}
         }
         updateSubStepsByMovedOwner(moveStep.getUid());
     }
@@ -220,7 +226,11 @@ public class Gantt extends Component implements HasSize {
 	}
 	
 	public StepElement getStepElement(String uid) {
-		return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst().orElse(null);
+		return getStepElementOptional(uid).orElse(null);
+	}
+	
+	public Optional<StepElement> getStepElementOptional(String uid) {
+		return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst();
 	}
 	
     public Stream<StepElement> getStepElements() {

@@ -38,7 +38,7 @@ import elemental.json.JsonArray;
 import elemental.json.impl.JreJsonFactory;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.7")
+@NpmPackage(value = "tltv-gantt-element", version = "^1.0.9")
 @NpmPackage(value = "tltv-timeline-element", version = "^1.0.13")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 public class Gantt extends Component implements HasSize {

@@ -23,9 +23,11 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -36,7 +38,8 @@ import com.vaadin.flow.router.Route;
 public class GanttDemoView extends VerticalLayout {
 
 	private Gantt gantt;
-	private Div scrollWrapper;
+	private FlexLayout scrollWrapper;
+	private Grid<Step> grid;
 	
 	private TimePicker startTimeField;
 	private TimePicker endTimeField;
@@ -46,14 +49,20 @@ public class GanttDemoView extends VerticalLayout {
 		setPadding(false);
 		
 		gantt = createGantt();
-		
+		gantt.setWidth("70%");
+		grid = gantt.buildCaptionGrid("Header");
+		grid.setWidth("30%");
+		grid.setAllRowsVisible(true);
+				
 		Div controlPanel = buildControlPanel();
 
-		scrollWrapper = new Div();
+		scrollWrapper = new FlexLayout();
     	scrollWrapper.setId("scroll-wrapper");
     	scrollWrapper.setMinHeight("0");
     	scrollWrapper.setWidthFull();
-    	scrollWrapper.add(gantt);
+    	scrollWrapper.add(
+    			grid, 
+    			gantt);
     	
         add(controlPanel, scrollWrapper);
 	}
@@ -242,7 +251,8 @@ public class GanttDemoView extends VerticalLayout {
 		size100x100.addClickListener(event -> {
 			event.getSource().setChecked(true);
 			setSizeFull();
-			gantt.setSizeFull();
+			gantt.setWidth("70%");
+			grid.setWidth("30%");
 			setFlexGrow(1, scrollWrapper);
 			size100xAuto.setChecked(false);
 			size100x50.setChecked(false);
@@ -252,8 +262,11 @@ public class GanttDemoView extends VerticalLayout {
 			event.getSource().setChecked(true);
 			setWidthFull();
 			setHeight(null);
-			gantt.setWidthFull();
+			gantt.setWidth("70%");
+			grid.setWidth("30%");
 			gantt.setHeight(null);
+			grid.setHeight(null);
+			grid.setAllRowsVisible(true);
 			setFlexGrow(0, scrollWrapper);
 			size100x100.setChecked(false);
 			size100x50.setChecked(false);
@@ -262,8 +275,10 @@ public class GanttDemoView extends VerticalLayout {
 		size50x100.addClickListener(event -> {
 			event.getSource().setChecked(true);
 			setSizeFull();
-			gantt.setWidth("50%");
+			gantt.setWidth("40%");
+			grid.setWidth("10%");
 			gantt.setHeight("100%");
+			grid.setHeight("100%");
 			setFlexGrow(1, scrollWrapper);
 			size100xAuto.setChecked(false);
 			size100x100.setChecked(false);
@@ -272,8 +287,10 @@ public class GanttDemoView extends VerticalLayout {
 		size100x50.addClickListener(event -> {
 			event.getSource().setChecked(true);
 			setSizeFull();
-			gantt.setWidth("100%");
+			gantt.setWidth("70%");
+			grid.setWidth("30%");
 			gantt.setHeight("50%");
+			grid.setHeight("50%");
 			setFlexGrow(1, scrollWrapper);
 			size100xAuto.setChecked(false);
 			size100x100.setChecked(false);
@@ -293,6 +310,13 @@ public class GanttDemoView extends VerticalLayout {
 		});
 		showMonth.setCheckable(true);
 		showMonth.setChecked(gantt.isMonthRowVisible());
+		
+		MenuItem showCaptionGrid = menuView.getSubMenu().addItem("Show Caption Grid");
+		showCaptionGrid.addClickListener(event -> {
+			grid.setVisible(event.getSource().isChecked());
+		});
+		showCaptionGrid.setCheckable(true);
+		showCaptionGrid.setChecked(grid.isVisible());
 
 		MenuItem menuEdit = menu.addItem("Edit");
 		
@@ -322,7 +346,7 @@ public class GanttDemoView extends VerticalLayout {
 		
 		return menu;
 	}
-
+	
 	private ZoneId getDefaultTimeZone() {
 		ZoneId zone = ZoneId.systemDefault();
 		return zone;

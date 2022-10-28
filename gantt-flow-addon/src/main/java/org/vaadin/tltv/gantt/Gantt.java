@@ -32,6 +32,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.grid.Grid;
@@ -42,9 +43,10 @@ import elemental.json.JsonArray;
 import elemental.json.impl.JreJsonFactory;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.10")
+@NpmPackage(value = "tltv-gantt-element", version = "^1.0.13")
 @NpmPackage(value = "tltv-timeline-element", version = "^1.0.13")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
+@CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
 public class Gantt extends Component implements HasSize {
 
 	private final JreJsonFactory jsonFactory = new JreJsonFactory();
@@ -464,9 +466,11 @@ public class Gantt extends Component implements HasSize {
 	
 	public Grid<Step> buildCaptionGrid(String header) {
 		var grid = new Grid<Step>();
+		grid.addClassName("gantt-caption-grid");
 		grid.addColumn(LitRenderer.<Step> of("<span>${item.caption}</span>").withProperty("caption", Step::getCaption)).setHeader(header);
 		grid.setItems(query -> getSteps().limit(query.getLimit()).skip(query.getOffset()));
 		addDataChangeListener(event -> grid.getLazyDataView().refreshAll());
+		getElement().executeJs("this.registerScrollElement($0.$.table)", grid);
 		return grid;
 	}
 	

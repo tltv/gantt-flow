@@ -1,0 +1,15 @@
+:host(.gantt-caption-grid) [part="row"],
+:host(.gantt-caption-grid) [part="cell"] {
+	min-height: 30px;
+	height: 30px;
+}
+
+:host(.gantt-caption-grid) thead,
+:host(.gantt-caption-grid) th[part~='header-cell'] {
+	min-height: 45px;
+	height: 45px;
+}
+
+:host(.gantt-caption-grid) table#table {
+	overflow-y: hidden;
+}

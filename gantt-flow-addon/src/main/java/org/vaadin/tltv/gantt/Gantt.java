@@ -466,12 +466,24 @@ public class Gantt extends Component implements HasSize {
 	
 	public Grid<Step> buildCaptionGrid(String header) {
 		var grid = new Grid<Step>();
+		grid.getStyle().set("--gantt-caption-grid-row-height", "30px");
+		grid.getStyle().set("--gantt-caption-grid-header-height", "44px");
 		grid.addClassName("gantt-caption-grid");
-		grid.addColumn(LitRenderer.<Step> of("<span>${item.caption}</span>").withProperty("caption", Step::getCaption)).setHeader(header);
+		grid.addColumn(LitRenderer.<Step> of("<span>${item.caption}</span>").withProperty("caption", Step::getCaption)).setHeader(header).setResizable(true);
 		grid.setItems(query -> getSteps().limit(query.getLimit()).skip(query.getOffset()));
-		addDataChangeListener(event -> grid.getLazyDataView().refreshAll());
+		addDataChangeListener(event -> {
+			grid.getLazyDataView().refreshAll();
+			refreshForHorizontalScrollbar(grid);
+		});
 		getElement().executeJs("this.registerScrollElement($0.$.table)", grid);
+		refreshForHorizontalScrollbar(grid);
 		return grid;
+	}
+	
+	private void refreshForHorizontalScrollbar(Grid<Step> grid) {
+		getElement().executeJs(
+				"let overflowKeys = ['left','right']; let self = this; this.updateComplete.then(() => { if(self.isContentOverflowingHorizontally() && !overflowKeys.some(key => $0.getAttribute('overflow').includes(key))) { $0.$.scroller.style.height = 'calc(100% - 18px)'; } else { $0.$.scroller.style.removeProperty('height'); }})",
+				grid);
 	}
 	
 	private void fireDataChangeEvent() {

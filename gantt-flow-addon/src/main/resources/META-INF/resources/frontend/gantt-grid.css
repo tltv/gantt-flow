@@ -1,15 +1,33 @@
-:host(.gantt-caption-grid) [part="row"],
-:host(.gantt-caption-grid) [part="cell"] {
-	min-height: 30px;
-	height: 30px;
+:host(.gantt-caption-grid) [part="row"] {
+	min-height: var(--gantt-caption-grid-row-height);
+	height: var(--gantt-caption-grid-row-height);
+}
+
+:host(.gantt-caption-grid:not([theme~='no-row-borders'])) td[part~="body-cell"] {
+	min-height: var(--gantt-caption-grid-row-height);
+	height: var(--gantt-caption-grid-row-height);
+}
+:host(.gantt-caption-grid[theme~='no-row-borders']) td[part~="body-cell"] {
+	min-height: calc(var(--gantt-caption-grid-row-height));
+	height: calc(var(--gantt-caption-grid-row-height));
+}
+
+:host(.gantt-caption-grid:not([theme~='no-row-borders'])) [part="row"][first] {
+	min-height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
+	height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
+}
+:host(.gantt-caption-grid:not([theme~='no-row-borders'])) [part='row'][first] td[part~="body-cell"] {
+	min-height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
+	height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
 }
 
 :host(.gantt-caption-grid) thead,
-:host(.gantt-caption-grid) th[part~='header-cell'] {
-	min-height: 45px;
-	height: 45px;
+:host(.gantt-caption-grid) th[part~="header-cell"] {
+	min-height: var(--gantt-caption-grid-header-height);
+	height: var(--gantt-caption-grid-header-height);
 }
 
 :host(.gantt-caption-grid) table#table {
 	overflow-y: hidden;
 }
+

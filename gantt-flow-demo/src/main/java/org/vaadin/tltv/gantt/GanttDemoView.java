@@ -43,6 +43,8 @@ public class GanttDemoView extends VerticalLayout {
 	
 	private TimePicker startTimeField;
 	private TimePicker endTimeField;
+	
+	private SizeOption size = SizeOption.FULL_WIDTH;
 
 	public GanttDemoView() {
 		setWidthFull();
@@ -50,9 +52,7 @@ public class GanttDemoView extends VerticalLayout {
 		
 		gantt = createGantt();
 		gantt.setWidth("70%");
-		grid = gantt.buildCaptionGrid("Header");
-		grid.setWidth("30%");
-		grid.setAllRowsVisible(true);
+		buildCaptionGrid();
 				
 		Div controlPanel = buildControlPanel();
 
@@ -65,6 +65,12 @@ public class GanttDemoView extends VerticalLayout {
     			gantt);
     	
         add(controlPanel, scrollWrapper);
+	}
+
+	private void buildCaptionGrid() {
+		grid = gantt.buildCaptionGrid("Header");
+		grid.setWidth("30%");
+		grid.setAllRowsVisible(true);
 	}
 
 	private Gantt createGantt() {
@@ -238,60 +244,43 @@ public class GanttDemoView extends VerticalLayout {
 		MenuBar menu = new MenuBar();
 		MenuItem menuView = menu.addItem("View");
 		MenuItem size = menuView.getSubMenu().addItem("Size");
-		MenuItem size100x100 = size.getSubMenu().addItem("100% x 100%");
+		MenuItem size100x100 = size.getSubMenu().addItem(SizeOption.FULL_SIZE.getText());
+		size100x100.setChecked(this.size == SizeOption.FULL_SIZE);
 		size100x100.setCheckable(true);
-		MenuItem size100xAuto = size.getSubMenu().addItem("100% x auto");
+		MenuItem size100xAuto = size.getSubMenu().addItem(SizeOption.FULL_WIDTH.getText());
 		size100xAuto.setCheckable(true);
-		size100xAuto.setChecked(true);
-		MenuItem size50x100 = size.getSubMenu().addItem("50% x 100%");
+		size100xAuto.setChecked(this.size == SizeOption.FULL_WIDTH);
+		MenuItem size50x100 = size.getSubMenu().addItem(SizeOption.HALF_WIDTH.getText());
 		size50x100.setCheckable(true);
-		MenuItem size100x50 = size.getSubMenu().addItem("100% x 50%");
+		size100x100.setChecked(this.size == SizeOption.HALF_WIDTH);
+		MenuItem size100x50 = size.getSubMenu().addItem(SizeOption.HALF_HEIGHT.getText());
 		size100x50.setCheckable(true);
+		size100x100.setChecked(this.size == SizeOption.HALF_HEIGHT);
 		
 		size100x100.addClickListener(event -> {
+			setSize(SizeOption.FULL_SIZE);
 			event.getSource().setChecked(true);
-			setSizeFull();
-			gantt.setWidth("70%");
-			grid.setWidth("30%");
-			setFlexGrow(1, scrollWrapper);
 			size100xAuto.setChecked(false);
 			size100x50.setChecked(false);
 			size50x100.setChecked(false);
 		});
 		size100xAuto.addClickListener(event -> {
+			setSize(SizeOption.FULL_WIDTH);
 			event.getSource().setChecked(true);
-			setWidthFull();
-			setHeight(null);
-			gantt.setWidth("70%");
-			grid.setWidth("30%");
-			gantt.setHeight(null);
-			grid.setHeight(null);
-			grid.setAllRowsVisible(true);
-			setFlexGrow(0, scrollWrapper);
 			size100x100.setChecked(false);
 			size100x50.setChecked(false);
 			size50x100.setChecked(false);
 		});
 		size50x100.addClickListener(event -> {
+			setSize(SizeOption.HALF_WIDTH);
 			event.getSource().setChecked(true);
-			setSizeFull();
-			gantt.setWidth("40%");
-			grid.setWidth("10%");
-			gantt.setHeight("100%");
-			grid.setHeight("100%");
-			setFlexGrow(1, scrollWrapper);
 			size100xAuto.setChecked(false);
 			size100x100.setChecked(false);
 			size100x50.setChecked(false);
 		});
 		size100x50.addClickListener(event -> {
+			setSize(SizeOption.HALF_HEIGHT);
 			event.getSource().setChecked(true);
-			setSizeFull();
-			gantt.setWidth("70%");
-			grid.setWidth("30%");
-			gantt.setHeight("50%");
-			grid.setHeight("50%");
-			setFlexGrow(1, scrollWrapper);
 			size100xAuto.setChecked(false);
 			size100x100.setChecked(false);
 			size50x100.setChecked(false);
@@ -313,7 +302,15 @@ public class GanttDemoView extends VerticalLayout {
 		
 		MenuItem showCaptionGrid = menuView.getSubMenu().addItem("Show Caption Grid");
 		showCaptionGrid.addClickListener(event -> {
-			grid.setVisible(event.getSource().isChecked());
+			if(event.getSource().isChecked()) {
+				buildCaptionGrid();
+				scrollWrapper.addComponentAsFirst(grid);
+			} else {
+				gantt.removeCaptionGrid();
+				scrollWrapper.remove(grid);
+				grid = null;
+			}
+			setSize(this.size);
 		});
 		showCaptionGrid.setCheckable(true);
 		showCaptionGrid.setChecked(grid.isVisible());
@@ -347,6 +344,44 @@ public class GanttDemoView extends VerticalLayout {
 		return menu;
 	}
 	
+	private void setSize(SizeOption newSize) {
+		this.size = newSize;
+		switch (size) {
+		case FULL_SIZE:
+			setSizeFull();
+			gantt.setWidth("70%");
+			grid.setWidth("30%");
+			setFlexGrow(1, scrollWrapper);
+			break;
+		case FULL_WIDTH:
+			setWidthFull();
+			setHeight(null);
+			gantt.setWidth("70%");
+			grid.setWidth("30%");
+			gantt.setHeight(null);
+			grid.setHeight(null);
+			grid.setAllRowsVisible(true);
+			setFlexGrow(0, scrollWrapper);
+			break;
+		case HALF_WIDTH:
+			setSizeFull();
+			gantt.setWidth("40%");
+			grid.setWidth("10%");
+			gantt.setHeight("100%");
+			grid.setHeight("100%");
+			setFlexGrow(1, scrollWrapper);
+			break;
+		case HALF_HEIGHT:
+			setSizeFull();
+			gantt.setWidth("70%");
+			grid.setWidth("30%");
+			gantt.setHeight("50%");
+			grid.setHeight("50%");
+			setFlexGrow(1, scrollWrapper);
+			break;
+		}
+	}
+	
 	private ZoneId getDefaultTimeZone() {
 		ZoneId zone = ZoneId.systemDefault();
 		return zone;
@@ -367,5 +402,21 @@ public class GanttDemoView extends VerticalLayout {
 		step.setEndDate(LocalDateTime.of(2020, 4, 14, 0, 0));
 		gantt.addStep(step);
 		
+	}
+	
+	enum SizeOption {
+		FULL_SIZE("100% x 100%"),
+		FULL_WIDTH("100% x auto"),
+		HALF_WIDTH("50% x 100%"),
+		HALF_HEIGHT("100% x 50%");
+		
+		private String text;
+		private SizeOption(String text) {
+			this.text = text;
+		}
+		
+		public String getText() {
+			return text;
+		}
 	}
 }

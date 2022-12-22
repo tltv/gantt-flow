@@ -27,7 +27,16 @@
 	height: var(--gantt-caption-grid-header-height);
 }
 
-:host(.gantt-caption-grid) table#table {
-	overflow-y: hidden;
+:host(.gantt-caption-grid) #scroller {
+	overflow: hidden;
 }
 
+:host(.gantt-caption-grid) table#table {
+	overflow-y: scroll;
+	padding-bottom: 1px;
+}
+
+:host(.gantt-caption-grid) {
+	border-top: 0;
+	border-bottom: 0;
+}

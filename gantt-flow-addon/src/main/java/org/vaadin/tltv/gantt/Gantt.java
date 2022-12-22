@@ -43,17 +43,22 @@ import elemental.json.JsonArray;
 import elemental.json.impl.JreJsonFactory;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.13")
-@NpmPackage(value = "tltv-timeline-element", version = "^1.0.13")
+@NpmPackage(value = "tltv-gantt-element", version = "^1.0.16")
+@NpmPackage(value = "tltv-timeline-element", version = "^1.0.14")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
 public class Gantt extends Component implements HasSize {
 
 	private final JreJsonFactory jsonFactory = new JreJsonFactory();
 
+	private Grid<Step> captionGrid;
+	private Registration captionGridDataChangeListener;
+	private Registration captionGridColumnResizeListener;
+	
 	public void setResolution(Resolution resolution) {
 		getElement().setAttribute("resolution",
 				Objects.requireNonNull(resolution, "Setting null Resolution is not allowed").name());
+		refreshForHorizontalScrollbar();
 	}
 
 	public Resolution getResolution() {
@@ -105,6 +110,7 @@ public class Gantt extends Component implements HasSize {
 
 	public void setYearRowVisible(boolean visible) {
 		getElement().setProperty("yearRowVisible", visible);
+		refreshForHorizontalScrollbar();
 	}
 
 	public boolean isYearRowVisible() {
@@ -113,6 +119,7 @@ public class Gantt extends Component implements HasSize {
 
 	public void setMonthRowVisible(boolean visible) {
 		getElement().setProperty("monthRowVisible", visible);
+		refreshForHorizontalScrollbar();
 	}
 
 	public boolean isMonthRowVisible() {
@@ -465,25 +472,64 @@ public class Gantt extends Component implements HasSize {
 	}
 	
 	public Grid<Step> buildCaptionGrid(String header) {
+		removeCaptionGrid();
 		var grid = new Grid<Step>();
+		this.captionGrid = grid;
 		grid.getStyle().set("--gantt-caption-grid-row-height", "30px");
-		grid.getStyle().set("--gantt-caption-grid-header-height", "44px");
 		grid.addClassName("gantt-caption-grid");
-		grid.addColumn(LitRenderer.<Step> of("<span>${item.caption}</span>").withProperty("caption", Step::getCaption)).setHeader(header).setResizable(true);
-		grid.setItems(query -> getSteps().limit(query.getLimit()).skip(query.getOffset()));
-		addDataChangeListener(event -> {
+		grid.addColumn(LitRenderer.<Step>of("<span>${item.caption}</span>").withProperty("caption", Step::getCaption))
+				.setHeader(header).setResizable(true);
+		captionGridColumnResizeListener = grid.addColumnResizeListener(event -> {
+			if(event.isFromClient()) {
+				refreshForHorizontalScrollbar();
+			}
+		});
+		grid.setItems(query -> getSteps().skip(query.getOffset()).limit(query.getLimit()));
+		captionGridDataChangeListener = addDataChangeListener(event -> {
 			grid.getLazyDataView().refreshAll();
-			refreshForHorizontalScrollbar(grid);
+			refreshForHorizontalScrollbar();
 		});
 		getElement().executeJs("this.registerScrollElement($0.$.table)", grid);
-		refreshForHorizontalScrollbar(grid);
+		refreshForHorizontalScrollbar();
 		return grid;
 	}
 	
-	private void refreshForHorizontalScrollbar(Grid<Step> grid) {
+	public void removeCaptionGrid() {
+		if(captionGrid != null) {
+			captionGridDataChangeListener.remove();
+			captionGridColumnResizeListener.remove();
+			getElement().executeJs("this.registerScrollElement(null)");
+			getElement().executeJs("this._container.style.overflowX = 'auto';");
+			captionGrid = null;
+		}
+	}
+	
+	public Grid<Step> getCaptionGrid() {
+		return captionGrid;
+	}
+	
+	private void refreshForHorizontalScrollbar() {
+		if(captionGrid == null) {
+			return;
+		}
 		getElement().executeJs(
-				"let overflowKeys = ['left','right']; let self = this; this.updateComplete.then(() => { if(self.isContentOverflowingHorizontally() && !overflowKeys.some(key => $0.getAttribute('overflow').includes(key))) { $0.$.scroller.style.height = 'calc(100% - 18px)'; } else { $0.$.scroller.style.removeProperty('height'); }})",
-				grid);
+				"""
+				let self = this; 
+				this.updateComplete.then(() => {
+						$0.style.setProperty('--gantt-caption-grid-header-height', self._timeline.clientHeight+'px');
+						$0.$.table.style.width='calc(100% + '+self.scrollbarWidth+'px'; 
+						const left = $0.$.table.scrollLeft > 0; 
+						const right = $0.$.table.scrollLeft < $0.$.table.scrollWidth - $0.$.table.clientWidth; 
+						const gridOverflowX = left || right; 
+						this._container.style.overflowX = (gridOverflowX) ? 'scroll' : 'auto'; 
+						if(self.isContentOverflowingHorizontally() && !gridOverflowX) { 
+							$0.$.scroller.style.height = 'calc(100% - ' + self.scrollbarWidth + 'px)'; 
+						} else { 
+							$0.$.scroller.style.removeProperty('height'); 
+						}
+					})
+				""",
+				captionGrid);
 	}
 	
 	private void fireDataChangeEvent() {

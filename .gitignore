@@ -21,3 +21,4 @@ pnpmfile.js
 pnpm-lock.yaml
 
 **/frontend/generated/
+vite.generated.ts

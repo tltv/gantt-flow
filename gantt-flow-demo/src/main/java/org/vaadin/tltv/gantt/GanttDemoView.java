@@ -3,34 +3,40 @@ package org.vaadin.tltv.gantt;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.vaadin.tltv.gantt.element.StepElement;
 import org.vaadin.tltv.gantt.event.GanttClickEvent;
+import org.vaadin.tltv.gantt.event.StepClickEvent;
 import org.vaadin.tltv.gantt.model.Resolution;
 import org.vaadin.tltv.gantt.model.Step;
 import org.vaadin.tltv.gantt.model.SubStep;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
 
@@ -41,10 +47,14 @@ public class GanttDemoView extends VerticalLayout {
 	private FlexLayout scrollWrapper;
 	private Grid<Step> grid;
 	
+	private DatePicker startDateField;
+	private DatePicker endDateField;
 	private TimePicker startTimeField;
 	private TimePicker endTimeField;
 	
 	private SizeOption size = SizeOption.FULL_WIDTH;
+	private int clickedBackgroundIndex;
+	private int stepCounter = 2;
 
 	public GanttDemoView() {
 		setWidthFull();
@@ -86,7 +96,7 @@ public class GanttDemoView extends VerticalLayout {
 		step1.setBackgroundColor("#9cfb84");
 		step1.setStartDate(LocalDateTime.of(2020, 4, 7, 0, 0));
 		step1.setEndDate(LocalDateTime.of(2020, 4, 11, 0, 0));
-
+		
 		Step step2 = new Step();
 		step2.setCaption("New Step 2");
 		step2.setBackgroundColor("#a3d9ff");
@@ -117,7 +127,7 @@ public class GanttDemoView extends VerticalLayout {
 		gantt.addSubStep(subStepC);
 		
 		gantt.addGanttClickListener(this::onGanttBackgroundClick);
-		gantt.addStepClickListener(event -> Notification.show("Clicked step " + event.getAnyStep().getCaption()));
+		gantt.addStepClickListener(this::onGanttStepClick);
 		gantt.addStepMoveListener(event -> {
 			Notification.show("Moved step : " + event.getAnyStep().getCaption());
 			
@@ -139,15 +149,80 @@ public class GanttDemoView extends VerticalLayout {
 			}
 		});
 		
+		// Add tooltip for step1 (TODO moving step loses the tooltip)
+		Tooltip.forComponent(gantt.getStepElement(step1.getUid()))
+        	.withText("Tooltip for " + step1.getCaption())
+        	.withPosition(Tooltip.TooltipPosition.TOP_START);
+
+		// Add dynamic context menu for gantt background. Clicked index is registered via addGanttClickListener and addStepClickListener.
+		addDynamicBackgroundContextMenu(gantt);
+        
+		// Add dynamic context menu for sub steps
+		addDynamicSubStepContextMenu(gantt.getStepElement(subStepA.getUid()));
+		addDynamicSubStepContextMenu(gantt.getStepElement(subStepB.getUid()));
+		addDynamicSubStepContextMenu(gantt.getStepElement(subStepC.getUid()));
+		
 		return gantt;
+	}
+
+	private void addDynamicBackgroundContextMenu(Gantt gantt) {
+		ContextMenu backgroundContextMenu = new ContextMenu();
+		backgroundContextMenu.setTarget(gantt);
+		gantt.getElement().addEventListener("vaadin-context-menu-before-open", event -> {
+			backgroundContextMenu.removeAll();
+			backgroundContextMenu.addItem("Add step at index " + clickedBackgroundIndex,
+					e -> onHandleAddStepContextMenuAction(clickedBackgroundIndex));
+			var targetStep = gantt.getStepsList().get(clickedBackgroundIndex);
+			backgroundContextMenu.addItem("Add sub-step for " + targetStep.getCaption(),
+					e -> onHandleAddSubStepContextMenuAction(targetStep.getUid()));
+			backgroundContextMenu.add(new Hr());
+			backgroundContextMenu.addItem("Remove step " + targetStep.getCaption(),
+					e -> onHandleRemoveStepContextMenuAction(targetStep.getUid()));
+		});
+	}
+	
+	private void addDynamicSubStepContextMenu(StepElement stepElement) {
+		stepElement.addContextMenu((contextMenu, uid) -> {
+			contextMenu.removeAll();
+			contextMenu.addItem("Add step at index " + clickedBackgroundIndex,
+					e -> onHandleAddStepContextMenuAction(clickedBackgroundIndex));
+			var targetStep = gantt.getStepsList().get(clickedBackgroundIndex);
+			contextMenu.addItem("Add sub-step for " + targetStep.getCaption(),
+					e -> onHandleAddSubStepContextMenuAction(targetStep.getUid()));
+			contextMenu.add(new Hr());
+			contextMenu.addItem("Remove step " + stepElement.getCaption(),
+					e -> onHandleRemoveStepContextMenuAction(uid));
+		});
+	}
+	
+	private void onHandleRemoveStepContextMenuAction(String uid) {
+		gantt.removeAnyStep(uid);
+	}
+	
+	private void onHandleAddSubStepContextMenuAction(String uid) {
+		var substep = createDefaultSubStep(uid);
+		gantt.addSubStep(substep);
+		addDynamicSubStepContextMenu(gantt.getStepElement(substep.getUid()));
+		
+	}
+	
+	private void onHandleAddStepContextMenuAction(int index) {
+		var step = createDefaultNewStep();
+		gantt.addStep(index, step);
 	}
 	
 	private void onGanttBackgroundClick(GanttClickEvent event) {
+		clickedBackgroundIndex = event.getIndex() != null ? event.getIndex() : 0;
 		if(event.getButton() == 2) {
 			Notification.show("Clicked with mouse 2 at index: " + event.getIndex());
 		} else {
-			Notification.show("Clicked at index: " + event.getIndex());
+			Notification.show("Clicked at index: " + event.getIndex() + " at date " + event.getDate().format(DateTimeFormatter.ofPattern("M/d/yyyy HH:mm")));
 		}
+	}
+	
+	private void onGanttStepClick(StepClickEvent event) {
+		clickedBackgroundIndex = event.getIndex();
+		Notification.show("Clicked step " + event.getAnyStep().getCaption());
 	}
 	
 	private Div buildControlPanel() {
@@ -167,29 +242,36 @@ public class GanttDemoView extends VerticalLayout {
 		resolutionField.setValue(gantt.getResolution());
 		resolutionField.addValueChangeListener(event -> {
 			gantt.setResolution(event.getValue());
+			if(event.getValue() == Resolution.Hour) {
+				gantt.setStartDateTime(startDateField.getValue().atTime(startTimeField.getValue()));
+				gantt.setEndDateTime(endDateField.getValue().atTime(endTimeField.getValue()));
+			} else {
+				 gantt.setStartDate(startDateField.getValue());
+				 gantt.setEndDate(endDateField.getValue());
+			}
 			setupToolsByResolution(event.getValue());
 		});
     	
-    	DatePicker startDate = new DatePicker(gantt.getStartDateTime().toLocalDate());
-    	startDate.setLabel("Start Date");
-    	startDate.addValueChangeListener(event -> gantt.setStartDate(event.getValue()));
+		startDateField = new DatePicker(gantt.getStartDate());
+		startDateField.setLabel("Start Date");
+		startDateField.addValueChangeListener(event -> gantt.setStartDate(event.getValue()));
     	
     	startTimeField = new TimePicker("Start Time", gantt.getStartDateTime().toLocalTime());
     	startTimeField.setWidth("8em");
     	startTimeField.addValueChangeListener(
-				event -> gantt.setStartDateTime(startDate.getValue().atTime(event.getValue())));
+				event -> gantt.setStartDateTime(startDateField.getValue().atTime(event.getValue())));
 		
-    	DatePicker endDate = new DatePicker(gantt.getEndDateTime().toLocalDate());
-    	endDate.setLabel("End Date");
-		endDate.addValueChangeListener(
+    	endDateField = new DatePicker(gantt.getEndDate());
+    	endDateField.setLabel("End Date");
+    	endDateField.addValueChangeListener(
 				event -> gantt.setEndDate(event.getValue()));
 		
 		endTimeField = new TimePicker("End Time (inclusive)", gantt.getEndDateTime().toLocalTime());
 		endTimeField.setWidth("8em");
 		endTimeField.addValueChangeListener(
-				event -> gantt.setEndDateTime(endDate.getValue().atTime(event.getValue())));
+				event -> gantt.setEndDateTime(endDateField.getValue().atTime(event.getValue())));
 		
-		tools.add(resolutionField, startDate, startTimeField, endDate, endTimeField);
+		tools.add(resolutionField, startDateField, startTimeField, endDateField, endTimeField);
 		tools.add(createTimeZoneField(gantt));
 		tools.add(createLocaleField(gantt));
 		
@@ -395,13 +477,34 @@ public class GanttDemoView extends VerticalLayout {
 	}
 	
 	private void insertNewStep() {
+		var step = createDefaultNewStep();
+		gantt.addStep(step);
+	}
+
+	private Step createDefaultNewStep() {
 		Step step = new Step();
-		step.setCaption("New Step");
-		step.setBackgroundColor("#fff");
+		step.setCaption("New Step " + ++stepCounter);
+		step.setBackgroundColor(String.format("#%06x", new Random().nextInt(0xffffff + 1)));
 		step.setStartDate(LocalDateTime.of(2020, 4, 7, 0, 0));
 		step.setEndDate(LocalDateTime.of(2020, 4, 14, 0, 0));
-		gantt.addStep(step);
-		
+		return step;
+	}
+	
+	private SubStep createDefaultSubStep(String ownerUid) {
+		var owner = gantt.getStep(ownerUid);
+		SubStep substep = new SubStep(owner);
+		substep.setCaption("New Sub Step");
+		substep.setBackgroundColor(String.format("#%06x", new Random().nextInt(0xffffff + 1)));
+		if(gantt.getSubStepElements(ownerUid).count() == 0) {
+			substep.setStartDate(owner.getStartDate());
+			substep.setEndDate(owner.getEndDate());
+		} else {
+			substep.setStartDate(owner.getEndDate());
+			substep.setEndDate(owner.getEndDate().plusDays(7));
+			owner.setEndDate(substep.getEndDate());
+			gantt.refresh(ownerUid);
+		}
+		return substep;
 	}
 	
 	enum SizeOption {

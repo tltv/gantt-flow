@@ -10,7 +10,12 @@ import org.vaadin.tltv.gantt.model.Resolution;
 
 public class GanttUtil {
 
-	private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH[':'mm':'ss'.'nnn'Z']");
+	private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH':'mm':'ss";
+	private static final String DATE_HOUR_PATTERN = "yyyy-MM-dd'T'HH";
+	private static final String DATE_PATTERN = "yyyy-MM-dd";
+	private final static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN);
+	private final static DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
+	private final static DateTimeFormatter dateHourFormatter = DateTimeFormatter.ofPattern(DATE_HOUR_PATTERN);
 
 	public static String formatDateTime(TemporalAccessor temporal) {
 		return dateTimeFormatter.format(temporal);
@@ -20,8 +25,33 @@ public class GanttUtil {
 		return dateTimeFormatter.parse(text);
 	}
 	
+	public static String formatDate(TemporalAccessor temporal) {
+		return dateFormatter.format(temporal);
+	}
+
+	public static TemporalAccessor parseDate(CharSequence text) {
+		return dateFormatter.parse(text);
+	}
+	
+	public static String formatDateHour(TemporalAccessor temporal) {
+		return dateHourFormatter.format(temporal);
+	}
+
+	public static TemporalAccessor parseDateHour(CharSequence text) {
+		return dateHourFormatter.parse(text);
+	}
+	
+	public static TemporalAccessor parse(CharSequence text) {
+		if(text.length() > 13) {
+			return parseDateTime(text);
+		} else if(text.length() > 10) {
+			return parseDateHour(text);
+		}
+		return parseDate(text);
+	}
+	
 	public static LocalDateTime parseLocalDateTime(CharSequence text) {
-		return LocalDateTime.from(parseDateTime(text));
+		return LocalDateTime.from(parseDateTime(text.subSequence(0, 19)));
 	}
 
 	public static LocalDateTime resetTimeToMin(LocalDateTime dateTime, Resolution resolution) {

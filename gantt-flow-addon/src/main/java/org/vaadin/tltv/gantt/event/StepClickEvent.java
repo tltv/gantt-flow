@@ -21,4 +21,8 @@ public class StepClickEvent extends ComponentEvent<Gantt> {
 		return getSource().getAnyStep(uid);
 	}
 	
+	public int getIndex() {
+		return getSource().indexOf(uid);
+	}
+	
 }

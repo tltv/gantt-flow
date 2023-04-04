@@ -149,10 +149,10 @@ public class GanttDemoView extends VerticalLayout {
 			}
 		});
 		
-		// Add tooltip for step1 (TODO moving step loses the tooltip)
-		Tooltip.forComponent(gantt.getStepElement(step1.getUid()))
-        	.withText("Tooltip for " + step1.getCaption())
-        	.withPosition(Tooltip.TooltipPosition.TOP_START);
+		// Add tooltip for step1 
+		gantt.getStepElement(step1.getUid()).addTooltip("Tooltip for " + step1.getCaption());
+		// and sub step A
+		gantt.getStepElement(subStepA.getUid()).addTooltip("Tooltip for " + subStepA.getCaption());
 
 		// Add dynamic context menu for gantt background. Clicked index is registered via addGanttClickListener and addStepClickListener.
 		addDynamicBackgroundContextMenu(gantt);

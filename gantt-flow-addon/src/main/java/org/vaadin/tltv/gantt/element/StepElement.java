@@ -2,6 +2,7 @@ package org.vaadin.tltv.gantt.element;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import org.vaadin.tltv.gantt.util.GanttUtil;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
+import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.shared.Registration;
 
 /**
@@ -27,6 +29,7 @@ public class StepElement extends Component {
 	
 	private final List<BiConsumer<ContextMenu, String>> contextMenuBuilders = new ArrayList<>();
 	private final List<Registration> contextMenuDomListenerRegistrations = new ArrayList<>();
+	private final List<Tooltip> tooltips = new ArrayList<>();
 	
 	public StepElement(GanttStep model) {
 		this.model = model;
@@ -119,5 +122,34 @@ public class StepElement extends Component {
 	
 	public List<BiConsumer<ContextMenu, String>> getContextMenuBuilders() {
 		return contextMenuBuilders.stream().collect(Collectors.toList());
+	}
+
+	/** Create and return new Tooltip instance attached to this step. */
+	public Tooltip addTooltip() {
+		return addTooltip((String) null);
+	}
+
+	/** Create and return new Tooltip instance attached to this step with the given text. */
+	public Tooltip addTooltip(String text) {
+		var tooltip = Tooltip.forComponent(this).withText(text);
+		tooltip.setPosition(Tooltip.TooltipPosition.TOP_START);
+		tooltips.add(tooltip);
+        return tooltip;	
+	}
+
+	/** Create and return new Tooltip instance attached to this step based on the given Tooltip data. */
+	public Tooltip addTooltip(Tooltip tooltip) {
+		var newTooltip = addTooltip(tooltip.getText());
+		newTooltip.setPosition(tooltip.getPosition());
+		newTooltip.setFocusDelay(tooltip.getFocusDelay());
+		newTooltip.setHideDelay(tooltip.getHideDelay());
+		newTooltip.setHoverDelay(tooltip.getHoverDelay());
+		newTooltip.setManual(tooltip.isManual());
+		return newTooltip;
+	}
+
+	/** Return all tooltips added to this step with addTooltip methods. */
+	public List<Tooltip> getTooltips() {
+		return Collections.unmodifiableList(this.tooltips);
 	}
 }

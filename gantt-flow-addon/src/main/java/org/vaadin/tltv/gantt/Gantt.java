@@ -46,7 +46,7 @@ import elemental.json.impl.JreJsonFactory;
 import static java.util.Optional.ofNullable;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.23")
+@NpmPackage(value = "tltv-gantt-element", version = "^1.0.24")
 @NpmPackage(value = "tltv-timeline-element", version = "^1.0.14")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")

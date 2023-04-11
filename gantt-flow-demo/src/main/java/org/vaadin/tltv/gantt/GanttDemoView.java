@@ -54,6 +54,7 @@ public class GanttDemoView extends VerticalLayout {
 	
 	private SizeOption size = SizeOption.FULL_WIDTH;
 	private int clickedBackgroundIndex;
+	private LocalDateTime clickedBackgroundDate;
 	private int stepCounter = 2;
 
 	public GanttDemoView() {
@@ -171,7 +172,7 @@ public class GanttDemoView extends VerticalLayout {
 		gantt.getElement().addEventListener("vaadin-context-menu-before-open", event -> {
 			backgroundContextMenu.removeAll();
 			backgroundContextMenu.addItem("Add step at index " + clickedBackgroundIndex,
-					e -> onHandleAddStepContextMenuAction(clickedBackgroundIndex));
+					e -> onHandleAddStepContextMenuAction(clickedBackgroundIndex, clickedBackgroundDate));
 			var targetStep = gantt.getStepsList().get(clickedBackgroundIndex);
 			backgroundContextMenu.addItem("Add sub-step for " + targetStep.getCaption(),
 					e -> onHandleAddSubStepContextMenuAction(targetStep.getUid()));
@@ -185,7 +186,7 @@ public class GanttDemoView extends VerticalLayout {
 		stepElement.addContextMenu((contextMenu, uid) -> {
 			contextMenu.removeAll();
 			contextMenu.addItem("Add step at index " + clickedBackgroundIndex,
-					e -> onHandleAddStepContextMenuAction(clickedBackgroundIndex));
+					e -> onHandleAddStepContextMenuAction(clickedBackgroundIndex, stepElement.getStartDateTime()));
 			var targetStep = gantt.getStepsList().get(clickedBackgroundIndex);
 			contextMenu.addItem("Add sub-step for " + targetStep.getCaption(),
 					e -> onHandleAddSubStepContextMenuAction(targetStep.getUid()));
@@ -206,13 +207,18 @@ public class GanttDemoView extends VerticalLayout {
 		
 	}
 	
-	private void onHandleAddStepContextMenuAction(int index) {
+	private void onHandleAddStepContextMenuAction(int index, LocalDateTime startDate) {
 		var step = createDefaultNewStep();
+		if(startDate != null) {
+			step.setStartDate(startDate);
+			step.setEndDate(startDate.plusDays(7));
+		}
 		gantt.addStep(index, step);
 	}
 	
 	private void onGanttBackgroundClick(GanttClickEvent event) {
 		clickedBackgroundIndex = event.getIndex() != null ? event.getIndex() : 0;
+		clickedBackgroundDate = event.getDate();
 		if(event.getButton() == 2) {
 			Notification.show("Clicked with mouse 2 at index: " + event.getIndex());
 		} else {

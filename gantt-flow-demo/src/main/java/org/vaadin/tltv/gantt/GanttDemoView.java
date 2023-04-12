@@ -439,6 +439,8 @@ public class GanttDemoView extends VerticalLayout {
 			setSizeFull();
 			gantt.setWidth("70%");
 			grid.setWidth("30%");
+			gantt.setHeight("100%");
+			grid.setHeight("100%");
 			setFlexGrow(1, scrollWrapper);
 			break;
 		case FULL_WIDTH:

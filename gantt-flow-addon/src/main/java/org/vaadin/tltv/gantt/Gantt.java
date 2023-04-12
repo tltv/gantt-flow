@@ -47,7 +47,7 @@ import static java.util.Optional.ofNullable;
 
 @Tag("gantt-element")
 @NpmPackage(value = "tltv-gantt-element", version = "^1.0.24")
-@NpmPackage(value = "tltv-timeline-element", version = "^1.0.16")
+@NpmPackage(value = "tltv-timeline-element", version = "^1.0.17")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
 public class Gantt extends Component implements HasSize {
@@ -123,6 +123,14 @@ public class Gantt extends Component implements HasSize {
 			return LocalDateTime.from(GanttUtil.parse(getElement().getAttribute("end")));
 		}
 		return LocalDateTime.of(getEndDate(), LocalTime.MIN);
+	}
+
+	public boolean isTwelveHourClock() {
+		return getElement().getProperty("twelveHourClock", false);
+	}
+
+	public void setTwelveHourClock(boolean enabled) {
+		getElement().setProperty("twelveHourClock", enabled);
 	}
 
 	public void setYearRowVisible(boolean visible) {
@@ -334,6 +342,7 @@ public class Gantt extends Component implements HasSize {
 	private void setupByLocale() {
 		setArrayProperty("monthNames", new DateFormatSymbols(getLocale()).getMonths());
 		setArrayProperty("weekdayNames", new DateFormatSymbols(getLocale()).getWeekdays());
+		
 		// First day of week (1 = sunday, 2 = monday)
 		final java.util.Calendar cal = new GregorianCalendar(getLocale());
 		getElement().setProperty("firstDayOfWeek", cal.getFirstDayOfWeek());

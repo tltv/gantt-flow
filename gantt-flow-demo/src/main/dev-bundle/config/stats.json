@@ -66,7 +66,7 @@
   "date-fns": "2.29.3",
   "lit": "2.6.1",
   "tltv-gantt-element": "^1.0.24",
-  "tltv-timeline-element": "^1.0.16"
+  "tltv-timeline-element": "^1.0.17"
  },
  "npmModules": {
   "@lit/reactive-element": "1.6.1",
@@ -134,7 +134,7 @@
   "lit-element": "3.3.1",
   "lit-html": "2.7.2",
   "tltv-gantt-element": "1.0.25",
-  "tltv-timeline-element": "1.0.16",
+  "tltv-timeline-element": "1.0.17",
   "tslib": "2.4.0"
  },
  "bundleImports": [
@@ -246,8 +246,8 @@
  },
  "themeJsonContents": {},
  "entryScripts": [
-  "VAADIN/build/indexhtml-29048cc5.js"
+  "VAADIN/build/indexhtml-2686528e.js"
  ],
  "webComponents": [],
- "packageJsonHash": "1fdfdf0197ac20f128c6aeb17e80640f7d3103179de1132a3e77b1d6ac401b00"
+ "packageJsonHash": "fd89738fe346befcb30fed31c77c3c24f4259f20dc3ac0fa10e1363a6b5e7226"
 }

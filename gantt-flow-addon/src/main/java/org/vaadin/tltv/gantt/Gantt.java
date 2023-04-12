@@ -47,7 +47,7 @@ import static java.util.Optional.ofNullable;
 
 @Tag("gantt-element")
 @NpmPackage(value = "tltv-gantt-element", version = "^1.0.24")
-@NpmPackage(value = "tltv-timeline-element", version = "^1.0.14")
+@NpmPackage(value = "tltv-timeline-element", version = "^1.0.16")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
 public class Gantt extends Component implements HasSize {
@@ -336,7 +336,7 @@ public class Gantt extends Component implements HasSize {
 		setArrayProperty("weekdayNames", new DateFormatSymbols(getLocale()).getWeekdays());
 		// First day of week (1 = sunday, 2 = monday)
 		final java.util.Calendar cal = new GregorianCalendar(getLocale());
-		getElement().setProperty("firstDayOfWeek", cal.getFirstDayOfWeek() - 1);
+		getElement().setProperty("firstDayOfWeek", cal.getFirstDayOfWeek());
 	}
 
 	private void setArrayProperty(String name, String[] array) {

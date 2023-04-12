@@ -243,7 +243,8 @@ public class GanttDemoView extends VerticalLayout {
     
     private HorizontalLayout createTools() {
     	HorizontalLayout tools = new HorizontalLayout();
-    	Select<Resolution> resolutionField = new Select<Resolution>(Resolution.values());
+    	Select<Resolution> resolutionField = new Select<Resolution>();
+		resolutionField.setItems(Resolution.values());
     	resolutionField.setLabel("Resolution");
 		resolutionField.setValue(gantt.getResolution());
 		resolutionField.addValueChangeListener(event -> {

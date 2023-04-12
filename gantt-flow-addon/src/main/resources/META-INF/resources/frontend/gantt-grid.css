@@ -1,4 +1,4 @@
-:host(.gantt-caption-grid) [part="row"] {
+:host(.gantt-caption-grid) [part~="row"] {
 	min-height: var(--gantt-caption-grid-row-height);
 	height: var(--gantt-caption-grid-row-height);
 }
@@ -12,11 +12,11 @@
 	height: calc(var(--gantt-caption-grid-row-height));
 }
 
-:host(.gantt-caption-grid:not([theme~='no-row-borders'])) [part="row"][first] {
+:host(.gantt-caption-grid:not([theme~='no-row-borders'])) [part~="first-row"] {
 	min-height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
 	height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
 }
-:host(.gantt-caption-grid:not([theme~='no-row-borders'])) [part='row'][first] td[part~="body-cell"] {
+:host(.gantt-caption-grid:not([theme~='no-row-borders'])) [part~="first-row"] td[part~="body-cell"] {
 	min-height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
 	height: calc(var(--gantt-caption-grid-row-height) - var(--_lumo-grid-border-width));
 }

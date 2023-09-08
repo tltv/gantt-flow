@@ -80,8 +80,8 @@
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.vaadin.tltv.gantt</groupId>
+         <dependency>
+            <groupId>org.vaadin.addons.tltv.gantt</groupId>
             <artifactId>gantt-flow-addon</artifactId>
             <version>${project.version}</version>
         </dependency>

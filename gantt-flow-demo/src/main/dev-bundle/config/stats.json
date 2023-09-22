@@ -65,8 +65,8 @@
   "construct-style-sheets-polyfill": "3.1.0",
   "date-fns": "2.29.3",
   "lit": "2.6.1",
-  "tltv-gantt-element": "^1.0.24",
-  "tltv-timeline-element": "^1.0.18"
+  "tltv-gantt-element": "^1.0.26",
+  "tltv-timeline-element": "^1.0.19"
  },
  "npmModules": {
   "@lit/reactive-element": "1.6.1",
@@ -130,11 +130,11 @@
   "@vaadin/vertical-layout": "24.0.2",
   "@vaadin/virtual-list": "24.0.2",
   "date-fns": "2.29.3",
-  "date-fns-tz": "1.3.4",
+  "date-fns-tz": "2.0.0",
   "lit-element": "3.3.1",
   "lit-html": "2.7.2",
-  "tltv-gantt-element": "1.0.25",
-  "tltv-timeline-element": "1.0.18",
+  "tltv-gantt-element": "1.0.26",
+  "tltv-timeline-element": "1.0.19",
   "tslib": "2.4.0"
  },
  "bundleImports": [
@@ -246,8 +246,8 @@
  },
  "themeJsonContents": {},
  "entryScripts": [
-  "VAADIN/build/indexhtml-2686528e.js"
+  "VAADIN/build/indexhtml-f8137023.js"
  ],
  "webComponents": [],
- "packageJsonHash": "a868870372bfe9f1dc3bb5b76f07a6e169d72295512749aca5522be89b71b8bf"
+ "packageJsonHash": "f981f7d77f8c40b987dc8b9c50de0b86d8fa38795766014be5e05e6555d9d1d6"
 }

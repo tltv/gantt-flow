@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.vaadin.tltv.gantt</groupId>
     <artifactId>gantt-flow-addon</artifactId>
@@ -8,13 +9,13 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-  
-   	<properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <vaadin.version>23.3.1</vaadin.version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <vaadin.version>23.3.24</vaadin.version>
     </properties>
-    
+
     <organization>
         <name>Tomi Virtanen</name>
     </organization>
@@ -25,8 +26,8 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-	
-	<repositories>
+
+    <repositories>
         <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
 
         <!-- Main Maven repository -->
@@ -52,8 +53,8 @@
             </snapshots>
         </repository>
     </repositories>
-	
-	<pluginRepositories>
+
+    <pluginRepositories>
         <!-- The order of definitions matters. Explicitly defining central here to make sure it has the highest priority. -->
         <pluginRepository>
             <id>central</id>
@@ -69,7 +70,7 @@
             </url>
         </pluginRepository>
     </pluginRepositories>
-	
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -81,13 +82,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
-	<dependencies>
+
+    <dependencies>
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-core</artifactId>
         </dependency>
-	</dependencies>
+    </dependencies>
 
     <profiles>
         <profile>

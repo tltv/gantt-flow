@@ -595,22 +595,20 @@ public class Gantt extends Component implements HasSize {
 			return;
 		}
 		getElement().executeJs(
-				"""
-				let self = this; 
-				this.updateComplete.then(() => {
-						$0.style.setProperty('--gantt-caption-grid-header-height', self._timeline.clientHeight+'px');
-						$0.$.table.style.width='calc(100% + '+self.scrollbarWidth+'px'; 
-						const left = $0.$.table.scrollLeft > 0; 
-						const right = $0.$.table.scrollLeft < $0.$.table.scrollWidth - $0.$.table.clientWidth; 
-						const gridOverflowX = left || right; 
-						this._container.style.overflowX = (gridOverflowX) ? 'scroll' : 'auto'; 
-						if(self.isContentOverflowingHorizontally() && !gridOverflowX) { 
-							$0.$.scroller.style.height = 'calc(100% - ' + self.scrollbarWidth + 'px)'; 
-						} else { 
-							$0.$.scroller.style.removeProperty('height'); 
-						}
-					})
-				""",
+                "let self = this;\n" +
+                "this.updateComplete.then(() => {\n" +
+                "		$0.style.setProperty('--gantt-caption-grid-header-height', self._timeline.clientHeight+'px');\n" +
+                "		$0.$.table.style.width='calc(100% + '+self.scrollbarWidth+'px';\n" +
+                "		const left = $0.$.table.scrollLeft > 0;\n" +
+                "		const right = $0.$.table.scrollLeft < $0.$.table.scrollWidth - $0.$.table.clientWidth;\n" +
+                "		const gridOverflowX = left || right;\n" +
+                "		this._container.style.overflowX = (gridOverflowX) ? 'scroll' : 'auto';\n" +
+                "		if(self.isContentOverflowingHorizontally() && !gridOverflowX) {\n" +
+                "			$0.$.scroller.style.height = 'calc(100% - ' + self.scrollbarWidth + 'px)';\n" +
+                "		} else {\n" +
+                "			$0.$.scroller.style.removeProperty('height');\n" +
+                "		}\n" +
+                "	})\n",
 				captionGrid);
 	}
 	

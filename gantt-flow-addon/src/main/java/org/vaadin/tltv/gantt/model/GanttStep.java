@@ -1,5 +1,7 @@
 package org.vaadin.tltv.gantt.model;
 
+import org.vaadin.tltv.gantt.Gantt;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -8,7 +10,7 @@ import java.util.Objects;
  */
 public abstract class GanttStep {
 
-    private Integer identifier;
+    private Long identifier;
     private String uid = "";
     private String captionMode = "TEXT";
     private String styleName = "";
@@ -23,11 +25,11 @@ public abstract class GanttStep {
     private LocalDateTime endDate;
     private boolean substep;
 
-    public Integer getIdentifier() {
+    public Long getIdentifier() {
         return identifier;
     }
 
-    public void setIdentifier(Integer identifier) {
+    public void setIdentifier(Long identifier) {
         this.identifier = identifier;
     }
 

@@ -46,8 +46,8 @@ import elemental.json.impl.JreJsonFactory;
 import static java.util.Optional.ofNullable;
 
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "^1.0.26")
-@NpmPackage(value = "tltv-timeline-element", version = "^1.0.19")
+@NpmPackage(value = "tltv-gantt-element", version = "1.0.27")
+@NpmPackage(value = "tltv-timeline-element", version = "1.0.20")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
 public class Gantt extends Component implements HasSize {

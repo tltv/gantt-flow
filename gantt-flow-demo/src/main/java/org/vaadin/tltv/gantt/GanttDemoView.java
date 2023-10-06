@@ -36,7 +36,6 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.shared.Tooltip;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.router.Route;
 
@@ -374,6 +373,13 @@ public class GanttDemoView extends VerticalLayout {
 			size50x100.setChecked(false);
 		});
 		
+		MenuItem twelveHourClock = menuView.getSubMenu().addItem("Twelve hour clock");
+		twelveHourClock.addClickListener(event -> {
+			gantt.setTwelveHourClock(event.getSource().isChecked());
+		});
+		twelveHourClock.setCheckable(true);
+		twelveHourClock.setChecked(gantt.isTwelveHourClock());
+
 		MenuItem showYear = menuView.getSubMenu().addItem("Show year");
 		showYear.addClickListener(event -> {
 			gantt.setYearRowVisible(event.getSource().isChecked());

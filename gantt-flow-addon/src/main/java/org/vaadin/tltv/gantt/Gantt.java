@@ -45,6 +45,15 @@ import elemental.json.impl.JreJsonFactory;
 
 import static java.util.Optional.ofNullable;
 
+/**
+ * Gantt is a component that shows Gantt chart which is by definition
+ * a bar chart that illustrates a project schedule. It's a list of steps where
+ * individual step can be divided in multiple substeps. Steps are movable and
+ * resizable by mouse/touch devices and API gives control to
+ * insert/update/remove steps programmatically. Steps are shown on a timeline
+ * which has Day, Week and Hour resolutions. Resolution, date range, language
+ * and timezone can be changed with the public API.
+ */
 @Tag("gantt-element")
 @NpmPackage(value = "tltv-gantt-element", version = "1.0.27")
 @NpmPackage(value = "tltv-timeline-element", version = "1.0.20")

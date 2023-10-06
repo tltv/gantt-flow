@@ -5,7 +5,7 @@
     <groupId>org.vaadin.addons.tltv.gantt</groupId>
     <artifactId>gantt-flow-demo</artifactId>
     <name>Gantt Flow Add-on Demo</name>
-    <version>24.0.0</version>
+    <version>24.0.1</version>
     <packaging>jar</packaging>
 
   

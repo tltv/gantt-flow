@@ -6,7 +6,7 @@
     <groupId>org.vaadin.addons.tltv.gantt</groupId>
     <artifactId>gantt-flow</artifactId>
     <packaging>pom</packaging>
-    <version>23.0.0</version>
+    <version>23.0.1</version>
     <name>Gantt Flow Add-on Project</name>
 
     <modules>

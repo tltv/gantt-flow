@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Tomi Virtanen
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.vaadin.tltv.gantt;
 
 import java.text.DateFormatSymbols;
@@ -5,6 +21,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
@@ -53,6 +70,9 @@ import static java.util.Optional.ofNullable;
  * insert/update/remove steps programmatically. Steps are shown on a timeline
  * which has Day, Week and Hour resolutions. Resolution, date range, language
  * and timezone can be changed with the public API.
+ * <p>
+ * Gantt component uses 'tltv-gantt-element' and 'tltv'timeline.element' web
+ * components.
  */
 @Tag("gantt-element")
 @NpmPackage(value = "tltv-gantt-element", version = "1.0.27")
@@ -67,47 +87,106 @@ public class Gantt extends Component implements HasSize {
 	private Registration captionGridDataChangeListener;
 	private Registration captionGridColumnResizeListener;
 	
+	/**
+	 * Set new timeline resolution. Allowed resolutions are
+	 * {@link Resolution#Hour}, {@link Resolution#Day} and
+	 * {@link Resolution#Week}.
+	 *
+	 * @param resolution {@link Resolution} enum
+	 */
 	public void setResolution(Resolution resolution) {
 		getElement().setAttribute("resolution",
 				Objects.requireNonNull(resolution, "Setting null Resolution is not allowed").name());
 		refreshForHorizontalScrollbar();
 	}
 
+	/**
+	 * Get current timeline resolution.
+	 * 
+	 * @return {@link Resolution} enum
+	 */
 	public Resolution getResolution() {
 		return Resolution.valueOf(getElement().getAttribute("resolution"));
 	}
 
+	/**
+	 * Set {@link Locale}. Setting locate updates locale of the web component by
+	 * language tag. It also
+	 * updates month names, week day names and first day of week based on the
+	 * {@link Locale}.
+	 * 
+	 * @param locale New {@link Locale}. Should not be null.
+	 */
 	public void setLocale(Locale locale) {
 		getElement().setAttribute("locale",
 				Objects.requireNonNull(locale, "Setting null Locale is not allowed").toLanguageTag());
 		setupByLocale();
 	}
 
+	/**
+	 * Return active locale based on the language tag in the web component.
+	 * 
+	 * @return Active {@link Locale}
+	 */
 	public Locale getLocale() {
 		return Locale.forLanguageTag(getElement().getAttribute("locale"));
 	}
 
+	/**
+	 * Set {@link TimeZone}.
+	 * 
+	 * @param timeZone New {@link TimeZone}. Should not be null.
+	 */
 	public void setTimeZone(TimeZone timeZone) {
 		getElement().setAttribute("zone",
 				Objects.requireNonNull(timeZone, "Setting null TimeZone is not allowed").getID());
 	}
 
+	/**
+	 * Get currently active {@link TimeZone} based on the zone in the web component.
+	 * 
+	 * @return Active {@link TimeZone}
+	 */
 	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone(getElement().getAttribute("zone"));
 	}
 
+	/**
+	 * Set start date of the timeline. Call this only with {@link Resolution#Day}
+	 * and {@link Resolution#Week}.
+	 * 
+	 * @param startDate Inclusive {@link LocaDate}.
+	 */
 	public void setStartDate(LocalDate startDate) {
 		getElement().setAttribute("start", GanttUtil.formatDate(resetTimeToMin(startDate.atStartOfDay())));
 	}
 
+	/**
+	 * Set start date and time of the timeline. Call this only with
+	 * {@link Resolution#Hour}.
+	 * 
+	 * @param startDate Inclusive {@link LocaDateTime}.
+	 */
 	public void setStartDateTime(LocalDateTime startDateTime) {
 		getElement().setAttribute("start", GanttUtil.formatDateHour(resetTimeToMin(startDateTime)));
 	}
 
+	/**
+	 * Get start date of the timeline based on the web component's <ode>start</code>
+	 * attribute.
+	 * 
+	 * @return Inclusive {@link LocaDate}
+	 */
 	public LocalDate getStartDate() {
 		return LocalDate.from(GanttUtil.parseDate(getElement().getAttribute("start")));
 	}
 	
+	/**
+	 * Get start datetime of the timeline based on the web component's
+	 * <ode>start</code> attribute.
+	 * 
+	 * @return Inclusive {@link LocaDateTime}
+	 */
 	public LocalDateTime getStartDateTime() {
 		if(getResolution() == Resolution.Hour) {
 			return LocalDateTime.from(GanttUtil.parse(getElement().getAttribute("start")));
@@ -115,18 +194,42 @@ public class Gantt extends Component implements HasSize {
 		return LocalDateTime.of(getStartDate(), LocalTime.MIN);
 	}
 
+	/**
+	 * Set end date of the timeline. Call this only with {@link Resolution#Day}
+	 * and {@link Resolution#Week}.
+	 * 
+	 * @param endDate Inclusive {@link LocaDate}.
+	 */
 	public void setEndDate(LocalDate endDate) {
 		getElement().setAttribute("end", GanttUtil.formatDate(resetTimeToMin(endDate.atStartOfDay())));
 	}
 
+	/**
+	 * Set end date and time of the timeline. Call this only with
+	 * {@link Resolution#Hour}.
+	 * 
+	 * @param endDateTime Inclusive {@link LocaDateTime}.
+	 */
 	public void setEndDateTime(LocalDateTime endDateTime) {
 		getElement().setAttribute("end", GanttUtil.formatDateHour(resetTimeToMin(endDateTime)));
 	}
 
+	/**
+	 * Get end date of the timeline based on the web component's <ode>end</code>
+	 * attribute.
+	 * 
+	 * @return Inclusive {@link LocaDate}
+	 */
 	public LocalDate getEndDate() {
 		return LocalDate.from(GanttUtil.parse(getElement().getAttribute("end")));
 	}
 	
+	/**
+	 * Get end datetime of the timeline based on the web component's
+	 * <ode>end</code> attribute.
+	 * 
+	 * @return Inclusive {@link LocaDateTime}
+	 */
 	public LocalDateTime getEndDateTime() {
 		if(getResolution() == Resolution.Hour) {
 			return LocalDateTime.from(GanttUtil.parse(getElement().getAttribute("end")));
@@ -365,10 +468,24 @@ public class Gantt extends Component implements HasSize {
 		getElement().executeJs("this." + name + " = $0;", jsonArray);
 	}
 
+	/**
+	 * Reset given datetime to timeline minimum for the given resolution.
+	 * 
+	 * @param dateTime Target datetime
+	 * @return Truncated {@link LocalDateTime} or null with a null date.
+	 * @see {@link GanttUtil#resetTimeToMin(LocalDateTime, Resolution)}
+	 */
 	LocalDateTime resetTimeToMin(LocalDateTime dateTime) {
 		return GanttUtil.resetTimeToMin(dateTime, getResolution());
 	}
 
+	/**
+	 * Reset given datetime to timeline maximum for the given resolution.
+	 * 
+	 * @param dateTime Target datetime
+	 * @return Truncated {@link LocalDateTime} or null with a null date.
+	 * @see {@link GanttUtil#resetTimeToMax(LocalDateTime, Resolution)}
+	 */
 	LocalDateTime resetTimeToMax(LocalDateTime dateTime, boolean exclusive) {
 		return GanttUtil.resetTimeToMax(dateTime, getResolution(), exclusive);
 	}
@@ -394,11 +511,17 @@ public class Gantt extends Component implements HasSize {
 		return getChildren().filter(child -> child instanceof StepElement).map(StepElement.class::cast);
 	}
     
+	/**
+	 * Returns {@link Step} stream excluding sub-steps.
+	 */
     public Stream<Step> getSteps() {
 		return getChildren().filter(child -> child instanceof StepElement).map(StepElement.class::cast)
 				.map(StepElement::getModel).map(Step.class::cast);
 	}
     
+	/**
+	 * Returns a list of {@link Step} objects excluding sub-steps.
+	 */
     public List<Step> getStepsList() {
     	return getSteps().collect(Collectors.toList());
     }

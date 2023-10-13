@@ -17,6 +17,12 @@ public class GanttUtil {
 	private final static DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_PATTERN);
 	private final static DateTimeFormatter dateHourFormatter = DateTimeFormatter.ofPattern(DATE_HOUR_PATTERN);
 
+	/**
+	 * Format given {@link TemporalAccessor} to datetime format yyyy-MM-ddTHH:mm:ss.
+	 * 
+	 * @param temporal Target datetime
+	 * @return Formatted datetime
+	 */
 	public static String formatDateTime(TemporalAccessor temporal) {
 		return dateTimeFormatter.format(temporal);
 	}
@@ -25,6 +31,12 @@ public class GanttUtil {
 		return dateTimeFormatter.parse(text);
 	}
 	
+	/**
+	 * Format given {@link TemporalAccessor} to date format yyyy-MM-dd.
+	 * 
+	 * @param temporal Target date
+	 * @return Formatted date
+	 */
 	public static String formatDate(TemporalAccessor temporal) {
 		return dateFormatter.format(temporal);
 	}
@@ -54,6 +66,16 @@ public class GanttUtil {
 		return LocalDateTime.from(parseDateTime(text.subSequence(0, 19)));
 	}
 
+	/**
+	 * Reset given datetime to minimum for the given resolution. Truncates to {@link
+	 * ChronoUnit#DAYS} for Day and Week resoutions. Truncates to {@link
+	 * ChronoUnit#HOURS} for
+	 * Hour resoution.
+	 * 
+	 * @param dateTime target datetime
+	 * @param resolution target resolution
+	 * @return Truncated {@link LocalDateTime} or null with a null date.
+	 */
 	public static LocalDateTime resetTimeToMin(LocalDateTime dateTime, Resolution resolution) {
 		if (Objects.isNull(dateTime)) {
 			return null;
@@ -64,6 +86,19 @@ public class GanttUtil {
 		return dateTime.truncatedTo(ChronoUnit.DAYS);
 	}
 
+	/**
+	 * Reset given datetime to timeline maximum for the given resolution. Truncates
+	 * or adds to last second of the day for Day and Week resoutions. Truncates or
+	 * adds to last second of hour for
+	 * Hour resoution. Maximum can be <code>exclusive</code> which means that given
+	 * date or hour is either excluded with a <code>true</code> or included with
+	 * <code>false</code>.
+	 * 
+	 * @param dateTime   target datetime
+	 * @param resolution target resolution
+	 * @param exclusive  exclusive maximum
+	 * @return Adjusted {@link LocalDateTime} or null with a null date.
+	 */
 	public static LocalDateTime resetTimeToMax(LocalDateTime dateTime, Resolution resolution, boolean exclusive) {
 		if (Objects.isNull(dateTime)) {
 			return null;

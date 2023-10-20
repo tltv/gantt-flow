@@ -1,5 +1,10 @@
 package org.vaadin.tltv.gantt.model;
 
+import org.vaadin.tltv.gantt.Gantt;
+
+/**
+ * A step inside {@link Gantt} component.
+ */
 public class Step extends GanttStep {
 
     private Step predecessor;

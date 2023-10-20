@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Abstract base class of step inside {@link Gantt} component.
+ * Abstract base class describing a step inside {@link Gantt} component.
  */
 public abstract class GanttStep {
 
@@ -25,6 +25,7 @@ public abstract class GanttStep {
     private LocalDateTime endDate;
     private boolean substep;
 
+    /** Application specific optional identifier. */
     public Long getIdentifier() {
         return identifier;
     }
@@ -33,10 +34,19 @@ public abstract class GanttStep {
         this.identifier = identifier;
     }
 
+    /**
+     * Unique indetifier for the step. UID is auto-generated for new steps when not
+     * set explicitly.
+     */
     public String getUid() {
         return uid;
     }
 
+    /**
+     * Set unique identifier for this step. It's not recommended to set this
+     * explicitly as it will be auto-generated when step is added first time into
+     * Gantt and UID is not already set.
+     */
     public void setUid(String uid) {
         this.uid = uid;
     }

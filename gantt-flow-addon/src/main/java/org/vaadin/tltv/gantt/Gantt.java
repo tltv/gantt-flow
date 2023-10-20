@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
@@ -172,7 +171,7 @@ public class Gantt extends Component implements HasSize {
 	}
 
 	/**
-	 * Get start date of the timeline based on the web component's <ode>start</code>
+	 * Get start date of the timeline based on the web component's <code>start</code>
 	 * attribute.
 	 * 
 	 * @return Inclusive {@link LocaDate}
@@ -183,7 +182,7 @@ public class Gantt extends Component implements HasSize {
 	
 	/**
 	 * Get start datetime of the timeline based on the web component's
-	 * <ode>start</code> attribute.
+	 * <code>start</code> attribute.
 	 * 
 	 * @return Inclusive {@link LocaDateTime}
 	 */
@@ -215,7 +214,7 @@ public class Gantt extends Component implements HasSize {
 	}
 
 	/**
-	 * Get end date of the timeline based on the web component's <ode>end</code>
+	 * Get end date of the timeline based on the web component's <code>end</code>
 	 * attribute.
 	 * 
 	 * @return Inclusive {@link LocaDate}
@@ -226,7 +225,7 @@ public class Gantt extends Component implements HasSize {
 	
 	/**
 	 * Get end datetime of the timeline based on the web component's
-	 * <ode>end</code> attribute.
+	 * <code>end</code> attribute.
 	 * 
 	 * @return Inclusive {@link LocaDateTime}
 	 */
@@ -237,10 +236,25 @@ public class Gantt extends Component implements HasSize {
 		return LocalDateTime.of(getEndDate(), LocalTime.MIN);
 	}
 
+	/**
+	 * Get value of twelve hour clock boolean flag based on the web component's
+	 * <code>twelveHourClock</code> attribute. <code>false</code> defaults to 24
+	 * hour clock. Affects time formatting in the timeline.
+	 * 
+	 * @return <code>true</code> when <code>twelveHourClock</code> is enabled and
+	 *         false otherwise
+	 */
 	public boolean isTwelveHourClock() {
 		return getElement().getProperty("twelveHourClock", false);
 	}
 
+	/**
+	 * Set value of twelve hour clock boolean flag to the web component's
+	 * <code>twelveHourClock</code> attribute.
+	 * 
+	 * @param enabled <code>true</code> when <code>twelveHourClock</code> is enabled
+	 *                and false otherwise
+	 */
 	public void setTwelveHourClock(boolean enabled) {
 		getElement().setProperty("twelveHourClock", enabled);
 	}
@@ -250,6 +264,10 @@ public class Gantt extends Component implements HasSize {
 		refreshForHorizontalScrollbar();
 	}
 
+	/**
+	 * Get year row visibility flag for the timeline based on the web component's
+	 * <code>yearRowVisible</code> property. Default is <code>true</code>.
+	 */
 	public boolean isYearRowVisible() {
 		return getElement().getProperty("yearRowVisible", true);
 	}
@@ -259,6 +277,10 @@ public class Gantt extends Component implements HasSize {
 		refreshForHorizontalScrollbar();
 	}
 
+	/**
+	 * Get month row visibility flag for the timeline based on the web component's
+	 * <code>monthRowVisible</code> property. Default is <code>true</code>.
+	 */
 	public boolean isMonthRowVisible() {
 		return getElement().getProperty("monthRowVisible", true);
 	}
@@ -267,6 +289,11 @@ public class Gantt extends Component implements HasSize {
 		getElement().setProperty("movableSteps", enabled);
 	}
 	
+	/**
+	 * Get boolean value of the web component's <code>movableSteps</code> attribute.
+	 * Attribute controls if steps are movable by user interactions using mouse or
+	 * touch device. Default is <code>true</code>.
+	 */
 	public boolean isMovableSteps() {
 		return getElement().getProperty("movableSteps", true); 
 	}
@@ -275,6 +302,11 @@ public class Gantt extends Component implements HasSize {
 		getElement().setProperty("resizableSteps", enabled);
 	}
 	
+	/**
+	 * Get boolean value of the web component's <code>resizableSteps</code> attribute.
+	 * Attribute controls if steps are resizable by user interactions using mouse or
+	 * touch device. Default is <code>true</code>.
+	 */	
 	public boolean isResizableSteps() {
 		return getElement().getProperty("resizableSteps", true); 
 	}
@@ -283,22 +315,44 @@ public class Gantt extends Component implements HasSize {
 		getElement().setProperty("movableStepsBetweenRows", enabled);
 	}
 	
+	/**
+	 * Get boolean value of the web component's <code>movableStepsBetweenRows</code>
+	 * attribute. Attribute controls if steps are movable between rows by user
+	 * interactions using mouse or touch device. Default is <code>true</code>. If
+	 * {@link #isMovableSteps()} is <code>false</code>, then steps are not movable
+	 * between rows either even if set to <code>true</code>.
+	 */
 	public boolean isMovableStepsBetweenRows() {
 		return getElement().getProperty("movableStepsBetweenRows", true); 
 	}
 	
+	/**
+	 * Add new step components based on the given collection of step descriptors.
+	 * 
+	 * @param steps a collection of step descriptor objects for the new components.
+	 */
 	public void addSteps(Collection<Step> steps) {
 		if(steps != null) {
 			addSteps(steps.stream());
 		}
 	}
 	
+	/**
+	 * Add new step components based on the given varargs of step descriptors.
+	 * 
+	 * @param steps a varargs of step descriptor objects for the new components.
+	 */
 	public void addSteps(Step... steps) {
 		if(steps != null) {
 			addSteps(Stream.of(steps));
 		}
 	}
 	
+	/**
+	 * Add new step components based on the given stream of step descriptors.
+	 * 
+	 * @param steps a stream of step descriptor objects for the new components.
+	 */
 	public void addSteps(Stream<Step> steps) {
 		if(steps == null) {
 			return;
@@ -307,6 +361,11 @@ public class Gantt extends Component implements HasSize {
 		fireDataChangeEvent();
 	}
 	
+	/**
+	 * Add new step component based on the given step descriptor.
+	 * 
+	 * @param step a step descriptor object for the new component
+	 */
 	public void addStep(Step step) {
 		appendStep(step);
 		fireDataChangeEvent();
@@ -335,6 +394,16 @@ public class Gantt extends Component implements HasSize {
 		}
 	}
 	
+	/**
+	 * Move given existing step to the given index. Index is based on the state at
+	 * the moment when method is called. Moved step component is removed and
+	 * discarded and new step component takes the new position. Existing substep
+	 * components are moved to the new step component. Context menus and tooltips
+	 * are recreated for the new step component.
+	 * 
+	 * @param toIndex Target zero based index where to move the step
+	 * @param step    step descriptor of the moved step
+	 */
     public void moveStep(int toIndex, Step step) {
         if (!contains(step)) {
             return;
@@ -365,6 +434,18 @@ public class Gantt extends Component implements HasSize {
         updateSubStepsByMovedOwner(moveStep.getUid());
     }
     
+	/**
+	 * Move given existing substep to the given index. Index is based on the state
+	 * at the moment when method is called. Moved substep component is removed and
+	 * discarded and new substep component takes the new position as a new children
+	 * inside the step component at the new index. {@link SubStep#getOwner()} is
+	 * changed to the new owner, and step dates are adjusted to include the substep
+	 * inside it. Other substep component are not touched. Context menus and tooltips
+	 * are recreated for the new substep component.
+	 * 
+	 * @param toIndex Target zero based index where to move the substep
+	 * @param subStep substep descriptor of the moved substep
+	 */	
 	public void moveSubStep(int toIndex, SubStep subStep) {
 		if (!contains(subStep)) {
 			return;

@@ -39,5 +39,5 @@ Building deliverable for Vaadin Directory:
 1. `cd gantt-flow-addon`
 2. Run `mvn clean install -Pdirectory`
 
-## Copyright
-Apache License 2.0 - Tomi Virtanen
+## License
+MIT - Tomi Virtanen

@@ -12,7 +12,7 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <vaadin.version>24.0.4</vaadin.version>
+        <vaadin.version>24.2.3</vaadin.version>
         <jetty.version>11.0.14</jetty.version>
         <failOnMissingWebXml>false</failOnMissingWebXml>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

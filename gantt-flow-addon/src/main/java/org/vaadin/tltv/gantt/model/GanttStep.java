@@ -1,6 +1,7 @@
 package org.vaadin.tltv.gantt.model;
 
 import org.vaadin.tltv.gantt.Gantt;
+import org.vaadin.tltv.gantt.element.StepElement;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -51,10 +52,12 @@ public abstract class GanttStep {
         this.uid = uid;
     }
 
+    @Deprecated
     public String getCaptionMode() {
         return captionMode;
     }
 
+    @Deprecated
     public void setCaptionMode(String captionMode) {
         this.captionMode = captionMode;
     }
@@ -67,6 +70,11 @@ public abstract class GanttStep {
         this.styleName = styleName;
     }
 
+    /**
+     * Get caption text.
+     * 
+     * @return Caption text
+     */
     public String getCaption() {
         return caption;
     }
@@ -75,18 +83,37 @@ public abstract class GanttStep {
         this.caption = caption;
     }
 
+    /**
+     * Gets a description text.
+     */
+    @Deprecated
     public String getDescription() {
         return description;
     }
 
+    /**
+     * Sets a description text.
+     * 
+     * @param description description text
+     * @deprecated Not shown anywhere. Use {@link StepElement#addTooltip(String)}
+     *             instead. Placeholder for backwards compatibility with Vaadin 8
+     *             Gantt API.
+     */
+    @Deprecated
     public void setDescription(String description) {
         this.description = description;
     }
 
+    /**
+     * Gets background color like '#000000', 'red' or null if not set.
+     */
     public String getBackgroundColor() {
         return backgroundColor;
     }
 
+    /**
+     * Sets background color like '#000000' or 'red'. null clears it.
+     */
     public void setBackgroundColor(String backgroundColor) {
         this.backgroundColor = backgroundColor;
     }
@@ -95,6 +122,14 @@ public abstract class GanttStep {
         return progress;
     }
 
+    /**
+     * Sets progress.
+     * 
+     * @param progress Progress number
+     * @deprecated Not shown anywhere. Use {@link StepElement#getElement()} to add a
+     *             custom progress bar element and/or CSS to draw a progress bar.
+     *             Placeholder for backwards compatibility with Vaadin 8 Gantt API.
+     */
     public void setProgress(double progress) {
         this.progress = progress;
     }
@@ -103,6 +138,14 @@ public abstract class GanttStep {
         return showProgress;
     }
 
+    /**
+     * Sets showProgress boolean flag.
+     * 
+     * @param showProgress boolean
+     * @deprecated Not shown anywhere. Use {@link StepElement#getElement()} to add a
+     *             custom progress bar element and/or CSS to draw a progress bar.
+     *             Placeholder for backwards compatibility with Vaadin 8 Gantt API.
+     */
     public void setShowProgress(boolean showProgress) {
         this.showProgress = showProgress;
     }

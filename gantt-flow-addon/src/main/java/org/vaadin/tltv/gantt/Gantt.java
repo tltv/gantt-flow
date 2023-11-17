@@ -328,6 +328,7 @@ public class Gantt extends Component implements HasSize {
 	
 	/**
 	 * Add new step components based on the given collection of step descriptors.
+	 * New components are appended at the end.
 	 * 
 	 * @param steps a collection of step descriptor objects for the new components.
 	 */
@@ -338,7 +339,8 @@ public class Gantt extends Component implements HasSize {
 	}
 	
 	/**
-	 * Add new step components based on the given varargs of step descriptors.
+	 * Add new step components based on the given varargs of step descriptors. New
+	 * components are appended at the end.
 	 * 
 	 * @param steps a varargs of step descriptor objects for the new components.
 	 */
@@ -349,7 +351,8 @@ public class Gantt extends Component implements HasSize {
 	}
 	
 	/**
-	 * Add new step components based on the given stream of step descriptors.
+	 * Add new step components based on the given stream of step descriptors. New
+	 * components are appended at the end.
 	 * 
 	 * @param steps a stream of step descriptor objects for the new components.
 	 */
@@ -362,7 +365,8 @@ public class Gantt extends Component implements HasSize {
 	}
 	
 	/**
-	 * Add new step component based on the given step descriptor.
+	 * Add new step component based on the given step descriptor. New component is
+	 * appended at the end.
 	 * 
 	 * @param step a step descriptor object for the new component
 	 */
@@ -371,12 +375,27 @@ public class Gantt extends Component implements HasSize {
 		fireDataChangeEvent();
 	}
 
+	/**
+	 * Add new sub step component based on the given sub step descriptor. New
+	 * components are appended at the end of the owner step component layout.
+	 * 
+	 * @param subStep a sub step descriptor object for the new component
+	 */
 	public void addSubStep(SubStep subStep) {
 		StepElement ownerStepElement = getStepElements().collect(Collectors.toList())
 				.get(indexOf(subStep.getOwner().getUid()));
 		ownerStepElement.getElement().appendChild(new StepElement(ensureUID(subStep)).getElement());
 	}
 	
+	/**
+	 * Add step component based on the given step descriptor. New component is moved
+	 * to the given index, moving previous component one index forward. If step
+	 * already exists based on its UID, then it will be moved. See
+	 * {@link #moveStep(int, GanttStep)}.
+	 * 
+	 * @param index zero based index for new position
+	 * @param step  a step descriptor object for the new or existing component
+	 */
 	public void addStep(int index, Step step) {
         if (contains(ensureUID(step))) {
             moveStep(index, step);
@@ -386,6 +405,14 @@ public class Gantt extends Component implements HasSize {
         }
     }
 
+	/**
+	 * Moves given step or sub step. Same as {@link #moveStep(int, Step)} or
+	 * {@link #moveSubStep(int, SubStep)} depending on which type of a component is
+	 * being moved based on the UID for the given {@link GanttStep}.
+	 * 
+	 * @param toIndex Target zero based index where to move the step
+	 * @param anyStep step or sub step descriptor of the moved step
+	 */
 	public void moveStep(int toIndex, GanttStep anyStep) {
 		if(anyStep.isSubstep()) {
 			moveSubStep(toIndex, (SubStep) anyStep);
@@ -473,18 +500,33 @@ public class Gantt extends Component implements HasSize {
 		stepElement.refresh();
     }
 
+	/**
+	 * Removes all given steps if they exists, based on their UIDs.
+	 * @param steps collection of steps, null does nothing
+	 */
 	public void removeSteps(Collection<Step> steps) {
 		if(steps != null) {
 			removeSteps(steps.stream());
 		}
 	}
 	
+	/**
+	 * Removes all given steps if they exists, based on their UIDs.
+	 * 
+	 * @param steps a varargs of steps, null does nothing
+	 */
 	public void removeSteps(Step... steps) {
 		if(steps != null) {
 			removeSteps(Stream.of(steps));
 		}
 	}
 	
+	/**
+	 * Removes all given steps looped through the given Stream if they exists, based
+	 * on their UIDs.
+	 * 
+	 * @param steps Stream of steps, null does nothing
+	 */
 	public void removeSteps(Stream<Step> steps) {
 		if(steps == null) {
 			return;
@@ -493,14 +535,32 @@ public class Gantt extends Component implements HasSize {
 		fireDataChangeEvent();
 	}
 	
+	/**
+	 * Removes Step or sub step if it exists, based on the given UID.
+	 * 
+	 * @param uid Target UID for step or sub step to remove
+	 * @return boolean true if step or sub step was removed, false otherwise
+	 */	
 	public boolean removeAnyStep(String uid) {
 		return doRemoveAnyStep(uid);
 	}
 	
+	/**
+	 * Removes Step or sub step if it exists, based on its UID.
+	 * 
+	 * @param step Target step or sub step to remove
+	 * @return boolean true if step or sub step was removed, false otherwise
+	 */
 	public boolean removeAnyStep(GanttStep step) {
 		return doRemoveAnyStep(step.getUid());
 	}
 	
+	/**
+	 * Removes given Step if it exists, based on its UID.
+	 * 
+	 * @param step Target step to remove
+	 * @return boolean true if step was removed, false otherwise
+	 */
 	public boolean removeStep(Step step) {
 		if (step == null) {
 			return false;
@@ -641,20 +701,46 @@ public class Gantt extends Component implements HasSize {
 				.map(StepElement.class::cast);
 	}
 
+	/**
+	 * Returns true if given UID matches with any existing step including sub step.
+	 * 
+	 * @param targetUid Target UID
+	 * @return boolean true if UID exists
+	 */
     public boolean contains(String targetUid) {
         return getFlatStepElements()
         		.anyMatch(step -> step.getUid().equals(targetUid));
     }
     
+	/**
+	 * Returns true if given {@link GanttStep}'s UID matches with any existing step
+	 * including sub step.
+	 * 
+	 * @param targetStep Target step or sub step
+	 * @return boolean true if UID exists
+	 */
     public boolean contains(GanttStep targetStep) {
         return getFlatStepElements()
         		.anyMatch(step -> step.getUid().equals(targetStep.getUid()));
     }
     
+	/**
+	 * Returns true if given {@link Step}'s UID matches with any existing step
+	 * excluding sub step.
+	 * 
+	 * @param targetStep Target step
+	 * @return boolean true if step with the UID exists
+	 */
 	public boolean contains(Step targetStep) {
 		return contains(getStepElements(), targetStep.getUid());
     }
 	
+	/**
+	 * Returns true if given {@link SubStep}'s UID matches with any existing sub step.
+	 * 
+	 * @param targetSubStep Target sub step
+	 * @return boolean true if sub step with the UID exists
+	 */	
 	public boolean contains(SubStep targetSubStep) {
         return contains(getSubStepElements(), targetSubStep.getUid());
     }
@@ -665,10 +751,23 @@ public class Gantt extends Component implements HasSize {
         		.anyMatch(step -> step.getUid().equals(targetUid));
     }
     
+	/**
+	 * Returns a zero based index of the given {@link Step}.
+	 * 
+	 * @param step Target {@link Step}
+	 * @return zero based index
+	 */
 	public int indexOf(Step step) {
 		return indexOf(step.getUid());
 	}
 	
+	/**
+	 * Returns a zero based index of the given UID for a step or sub step. For sub
+	 * steps index is based on the owner step.
+	 * 
+	 * @param stepUid Target UID
+	 * @return zero based index
+	 */
     public int indexOf(String stepUid) {
     	GanttStep step = getAnyStep(stepUid);
     	if(step.isSubstep()) {
@@ -678,11 +777,23 @@ public class Gantt extends Component implements HasSize {
         return uidList.indexOf(step.getUid());
     }
     
+	/**
+	 * Returns {@link SubStep} by the UID or null if it doesn't exist.
+	 * 
+	 * @param uid Target UID
+	 * @return {@link SubStep} or null
+	 */
     public SubStep getSubStep(String uid) {
 		return getSubStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
 				.map(StepElement::getModel).map(SubStep.class::cast).orElse(null);
 	}
     
+	/**
+	 * Returns {@link Step} by the UID or null if it doesn't exist.
+	 * 
+	 * @param uid Target UID
+	 * @return {@link Step} or null
+	 */	
 	public Step getStep(String uid) {
 		return getStepElements().filter(step -> Objects.equals(uid, step.getUid())).findFirst()
 				.map(StepElement::getModel).map(Step.class::cast).orElse(null);
@@ -696,6 +807,11 @@ public class Gantt extends Component implements HasSize {
 				.map(StepElement::getModel).orElse(null);
     }
 
+	/**
+	 * Updates sub step start and end dates for moved owner step.
+	 * 
+	 * @param stepUid Target owner step UID
+	 */
     public void updateSubStepsByMovedOwner(String stepUid) {
     	Step step = getStep(stepUid);
 		// update sub-steps by moved owner
@@ -766,6 +882,15 @@ public class Gantt extends Component implements HasSize {
 		return addListener(GanttDataChangeEvent.class, listener);
 	}
 	
+	/**
+	 * Builds a new {@link Grid} instance with a single column that renders text
+	 * based on the step caption. {@link Grid} will be kept in sync with the Gantt
+	 * steps. Instance is available then with {@link #getCaptionGrid()}. This does
+	 * not attach component to any layout.
+	 * 
+	 * @param header Header of the column
+	 * @return A new {@link Grid} instance
+	 */
 	public Grid<Step> buildCaptionGrid(String header) {
 		removeCaptionGrid();
 		var grid = new Grid<Step>();
@@ -789,6 +914,12 @@ public class Gantt extends Component implements HasSize {
 		return grid;
 	}
 	
+	/**
+	 * Remove caption {@link Grid} instance if it exists. Grid will not be kept in
+	 * sync with the Gantt after calling this. This does not detach component from
+	 * the layout. Synchronized Grid can be created with
+	 * {@link #buildCaptionGrid(String)}.
+	 */
 	public void removeCaptionGrid() {
 		if(captionGrid != null) {
 			captionGridDataChangeListener.remove();
@@ -799,6 +930,12 @@ public class Gantt extends Component implements HasSize {
 		}
 	}
 	
+	/**
+	 * Get caption {@link Grid} instance or null if it's not set. See
+	 * {@link #buildCaptionGrid(String)}.
+	 * 
+	 * @return {@link Grid} instance or null
+	 */
 	public Grid<Step> getCaptionGrid() {
 		return captionGrid;
 	}

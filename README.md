@@ -15,7 +15,7 @@ Step step = new Step();
 step.setCaption("First Step");
 step.setBackgroundColor("#9cfb84");
 step.setStartDate(LocalDate.now().atTime(12, 0));
-step.setEndDate(step.getSta.plusWeeks(1));
+step.setEndDate(step.getStartDate().plusWeeks(1));
 gantt.addStep(step);
 
 ```

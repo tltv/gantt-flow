@@ -87,11 +87,30 @@ public class Gantt extends Component implements HasSize {
 	private Registration captionGridColumnResizeListener;
 	
 	/**
+	 * Default contructor with default settings. Sets locale to match
+	 * {@link Component#getLocale()}.
+	 */
+	public Gantt() {
+		setupDefaults();
+	}
+
+	/**
+	 * Setup component with default settings.
+	 */
+	public void setupDefaults() {
+		setResolution(Resolution.Day);
+		setLocale(super.getLocale());
+		setTimeZone(TimeZone.getTimeZone("Europe/London"));
+		setStartDate(LocalDate.now());
+		setEndDate(LocalDate.now().plusMonths(1));
+	}
+
+	/**
 	 * Set new timeline resolution. Allowed resolutions are
 	 * {@link Resolution#Hour}, {@link Resolution#Day} and
 	 * {@link Resolution#Week}.
 	 *
-	 * @param resolution {@link Resolution} enum
+	 * @param resolution {@link Resolution} enum. Not null.
 	 */
 	public void setResolution(Resolution resolution) {
 		getElement().setAttribute("resolution",
@@ -100,7 +119,7 @@ public class Gantt extends Component implements HasSize {
 	}
 
 	/**
-	 * Get current timeline resolution.
+	 * Get current timeline resolution. Default is {@link Resolution#Day}.
 	 * 
 	 * @return {@link Resolution} enum
 	 */
@@ -124,9 +143,14 @@ public class Gantt extends Component implements HasSize {
 
 	/**
 	 * Return active locale based on the language tag in the web component.
+	 * This may not be in sync with the application locale if it's changed with
+	 * {@link Gantt#setLocale(Locale)} or if application locale is changed after
+	 * constructor is called. Default constructor calls it once with application's
+	 * locale read with {@link Component#getLocale()}.
 	 * 
 	 * @return Active {@link Locale}
 	 */
+	@Override
 	public Locale getLocale() {
 		return Locale.forLanguageTag(getElement().getAttribute("locale"));
 	}
@@ -143,6 +167,7 @@ public class Gantt extends Component implements HasSize {
 
 	/**
 	 * Get currently active {@link TimeZone} based on the zone in the web component.
+	 * Default is "Europe/London".
 	 * 
 	 * @return Active {@link TimeZone}
 	 */
@@ -154,9 +179,10 @@ public class Gantt extends Component implements HasSize {
 	 * Set start date of the timeline. Call this only with {@link Resolution#Day}
 	 * and {@link Resolution#Week}.
 	 * 
-	 * @param startDate Inclusive {@link LocaDate}.
+	 * @param startDate Inclusive {@link LocaDate}. Not null.
 	 */
 	public void setStartDate(LocalDate startDate) {
+		Objects.requireNonNull(startDate, "Setting null start date is not allowed");
 		getElement().setAttribute("start", GanttUtil.formatDate(resetTimeToMin(startDate.atStartOfDay())));
 	}
 
@@ -164,9 +190,10 @@ public class Gantt extends Component implements HasSize {
 	 * Set start date and time of the timeline. Call this only with
 	 * {@link Resolution#Hour}.
 	 * 
-	 * @param startDate Inclusive {@link LocaDateTime}.
+	 * @param startDate Inclusive {@link LocaDateTime}. Not null.
 	 */
 	public void setStartDateTime(LocalDateTime startDateTime) {
+		Objects.requireNonNull(startDateTime, "Setting null start date time is not allowed");
 		getElement().setAttribute("start", GanttUtil.formatDateHour(resetTimeToMin(startDateTime)));
 	}
 
@@ -197,9 +224,10 @@ public class Gantt extends Component implements HasSize {
 	 * Set end date of the timeline. Call this only with {@link Resolution#Day}
 	 * and {@link Resolution#Week}.
 	 * 
-	 * @param endDate Inclusive {@link LocaDate}.
+	 * @param endDate Inclusive {@link LocaDate}. Not null.
 	 */
 	public void setEndDate(LocalDate endDate) {
+		Objects.requireNonNull(endDate, "Setting null end date is not allowed");
 		getElement().setAttribute("end", GanttUtil.formatDate(resetTimeToMin(endDate.atStartOfDay())));
 	}
 
@@ -207,9 +235,10 @@ public class Gantt extends Component implements HasSize {
 	 * Set end date and time of the timeline. Call this only with
 	 * {@link Resolution#Hour}.
 	 * 
-	 * @param endDateTime Inclusive {@link LocaDateTime}.
+	 * @param endDateTime Inclusive {@link LocaDateTime}. Not null.
 	 */
 	public void setEndDateTime(LocalDateTime endDateTime) {
+		Objects.requireNonNull(endDateTime, "Setting null end date time is not allowed");
 		getElement().setAttribute("end", GanttUtil.formatDateHour(resetTimeToMin(endDateTime)));
 	}
 

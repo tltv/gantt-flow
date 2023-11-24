@@ -167,28 +167,28 @@ public abstract class GanttStep {
     }
 
     /**
-     * Get inclusive start date and time time in milliseconds.
+     * Get inclusive start date and time time. 
      */
     public LocalDateTime getStartDate() {
         return startDate;
     }
 
     /**
-     * Set inclusive start date and time in milliseconds.
+     * Set inclusive start date and time.
      */
     public void setStartDate(LocalDateTime startDate) {
         this.startDate = startDate;
     }
 
     /**
-     * Get inclusive end date and time time in milliseconds.
+     * Get inclusive end date and time.
      */
     public LocalDateTime getEndDate() {
         return endDate;
     }
 
     /**
-     * Set inclusive end date and time in milliseconds.
+     * Set inclusive end date and time.
      */
     public void setEndDate(LocalDateTime endDate) {
         this.endDate = endDate;

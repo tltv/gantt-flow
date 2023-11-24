@@ -7,6 +7,19 @@ Multi-module Maven project with two modules: gantt-flow-addon and gantt-flow-dem
 - `gantt-flow-addon` contains add-on sources build into JAR deliverable.
 - `gantt-flow-demo` contains demo application build into WAR package.
 
+# Example
+
+```java
+Gantt gantt = new Gantt();
+Step step = new Step();
+step.setCaption("First Step");
+step.setBackgroundColor("#9cfb84");
+step.setStartDate(LocalDate.now().atTime(12, 0));
+step.setEndDate(step.getSta.plusWeeks(1));
+gantt.addStep(step);
+
+```
+
 # Dependencies
 
 Main component class `org.vaadin.tltv.gantt.Gantt` is a Java wrapper for `tltv-gantt-element` web component. This requires two dependecies:
@@ -17,6 +30,10 @@ Timeline element and gantt element depends on following libraries:
 - Lit (https://lit.dev/)
 - date-fns (https://github.com/date-fns/date-fns) 
 - date-fns-tz (https://github.com/marnusw/date-fns-tz)
+
+# Known issues
+`formatInTimeZone` is not working in all cases (date-fns-tz 2.0.0). 
+E.g. Gantt with "Europe/Berlin" time-zone shows wrong hour when run in Browser with "Europe/Helsinki" timezone.
 
 # Install
 

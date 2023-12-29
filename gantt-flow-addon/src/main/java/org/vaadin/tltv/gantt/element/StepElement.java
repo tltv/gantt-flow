@@ -12,6 +12,7 @@ import org.vaadin.tltv.gantt.model.Resolution;
 import org.vaadin.tltv.gantt.util.GanttUtil;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.shared.Tooltip;
@@ -21,7 +22,7 @@ import com.vaadin.flow.shared.Registration;
  * {@link StepElement} represents <code>gantt-step-element</code> element in the DOM.
  */
 @Tag("gantt-step-element")
-public class StepElement extends Component {
+public class StepElement extends Component implements HasComponents {
 
 	private final String uid;
 	

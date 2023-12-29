@@ -80,7 +80,7 @@ import static java.util.Optional.ofNullable;
  * components.
  */
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "1.0.27")
+@NpmPackage(value = "tltv-gantt-element", version = "1.0.28")
 @NpmPackage(value = "tltv-timeline-element", version = "1.0.20")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
@@ -478,7 +478,9 @@ public class Gantt extends Component implements HasSize {
         	// memorize context menu builders before removing old element with builders.
         	var contextMenuBuilders = getStepElementOptional(moveStep.getUid()).map(StepElement::getContextMenuBuilders).orElse(List.of());
 			// and also tooltips.
-			var tooltips =  getStepElementOptional(moveStep.getUid()).map(StepElement::getTooltips).orElse(List.of());
+			var tooltips = getStepElementOptional(moveStep.getUid()).map(StepElement::getTooltips).orElse(List.of());
+			var components = getStepElementOptional(moveStep.getUid()).map(StepElement::getChildren)
+					.orElse(Stream.empty()).toList();
         	getStepElementOptional(moveStep.getUid()).ifPresent(StepElement::removeFromParent);
         	StepElement stepElement = new StepElement(moveStep);
         	subStepEements.forEach(subStepElement -> stepElement.getElement().appendChild(subStepElement.getElement()));
@@ -490,7 +492,8 @@ public class Gantt extends Component implements HasSize {
         	// add context menu builders back in the end.
 			contextMenuBuilders.stream().forEach(stepElement::addContextMenu);
 			// and tooltips.
-			tooltips.forEach(stepElement::addTooltip); 
+			tooltips.forEach(stepElement::addTooltip);
+			stepElement.add(components);
         	fireDataChangeEvent();
         }
         updateSubStepsByMovedOwner(moveStep.getUid());
@@ -521,6 +524,8 @@ public class Gantt extends Component implements HasSize {
 			var contextMenuBuilders = ofNullable(substepElement).map(StepElement::getContextMenuBuilders).orElse(List.of());
 			// and also tooltips.
 			var tooltips = ofNullable(substepElement).map(StepElement::getTooltips).orElse(List.of());
+			var components = ofNullable(substepElement).map(StepElement::getChildren)
+					.orElse(Stream.empty()).toList();
 			getSubStepElements().filter(item -> item.getUid().equals(subStep.getUid())).findFirst()
 					.ifPresent(StepElement::removeFromParent);
 			subStep.setOwner(getStep(targetStepUid));
@@ -529,7 +534,8 @@ public class Gantt extends Component implements HasSize {
 			// add context menu builders back in the end.
 			contextMenuBuilders.stream().forEach(substepElement::addContextMenu);
 			// and tooltips.
-			tooltips.forEach(substepElement::addTooltip); 
+			tooltips.forEach(substepElement::addTooltip);
+			substepElement.add(components);
 		}
 		subStep.updateOwnerDatesBySubStep();
 		stepElement.refresh();

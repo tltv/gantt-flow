@@ -30,13 +30,18 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.dom.Style.Display;
+import com.vaadin.flow.dom.Style.Position;
 import com.vaadin.flow.router.Route;
 
 @Route("")
@@ -154,6 +159,9 @@ public class GanttDemoView extends VerticalLayout {
 		// and sub step A
 		gantt.getStepElement(subStepA.getUid()).addTooltip("Tooltip for " + subStepA.getCaption());
 
+		// Add progress bar for step1
+		gantt.getStepElement(step1.getUid()).add(createProgressBar(30));
+
 		// Add dynamic context menu for gantt background. Clicked index is registered via addGanttClickListener and addStepClickListener.
 		addDynamicBackgroundContextMenu(gantt);
         
@@ -163,6 +171,18 @@ public class GanttDemoView extends VerticalLayout {
 		addDynamicSubStepContextMenu(gantt.getStepElement(subStepC.getUid()));
 		
 		return gantt;
+	}
+
+	private ProgressBar createProgressBar(double initialProgress) {
+		ProgressBar bar = new ProgressBar(0, 100);
+		bar.setHeight("20%");
+		bar.setWidth("100%");
+		bar.getStyle().setDisplay(Display.INLINE_BLOCK);
+		bar.getStyle().setBottom("0");
+		bar.getStyle().setPosition(Position.ABSOLUTE);
+		bar.getStyle().setMargin("0");
+		bar.setValue(initialProgress);
+		return bar;
 	}
 
 	private void addDynamicBackgroundContextMenu(Gantt gantt) {
@@ -178,6 +198,8 @@ public class GanttDemoView extends VerticalLayout {
 			backgroundContextMenu.add(new Hr());
 			backgroundContextMenu.addItem("Remove step " + targetStep.getCaption(),
 					e -> onHandleRemoveStepContextMenuAction(targetStep.getUid()));
+			backgroundContextMenu.add(new Hr());
+			backgroundContextMenu.add(createProgressEditor(gantt.getStepElement(targetStep.getUid())));
 		});
 	}
 	
@@ -192,9 +214,39 @@ public class GanttDemoView extends VerticalLayout {
 			contextMenu.add(new Hr());
 			contextMenu.addItem("Remove step " + stepElement.getCaption(),
 					e -> onHandleRemoveStepContextMenuAction(uid));
+			contextMenu.add(new Hr());
+			contextMenu.add(createProgressEditor(stepElement));
 		});
 	}
 	
+	private IntegerField createProgressEditor(StepElement stepElement) {
+		var field = new IntegerField();
+		field.setSuffixComponent(new Span("%"));
+		field.setPlaceholder("Set progress");
+		field.setStep(5);
+		field.setStepButtonsVisible(true);
+		field.setMin(0);
+		field.setMax(100);
+		// set initial value from first found progress bar component
+		field.setValue(stepElement.getChildren()
+				.filter(ProgressBar.class::isInstance).findFirst()
+				.map(ProgressBar.class::cast).map(progressBar -> progressBar.getValue()).map(Double::intValue)
+				.orElse(null));
+		field.addValueChangeListener(ev -> {
+			if (ev.getValue() > 0 && !stepElement.getChildren()
+					.anyMatch(ProgressBar.class::isInstance)) {
+				stepElement.add(createProgressBar(0));
+			}
+			// updates step's all progress bar components
+			stepElement.getChildren()
+					.filter(ProgressBar.class::isInstance).map(ProgressBar.class::cast)
+					.forEach(progressBar -> {
+						progressBar.setValue((ev.getValue()) % 101);
+					});
+		});
+		return field;
+	}
+
 	private void onHandleRemoveStepContextMenuAction(String uid) {
 		gantt.removeAnyStep(uid);
 	}

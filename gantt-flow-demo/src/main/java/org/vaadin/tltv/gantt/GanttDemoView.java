@@ -86,6 +86,7 @@ public class GanttDemoView extends VerticalLayout {
 		grid = gantt.buildCaptionGrid("Header");
 		grid.setWidth("30%");
 		grid.setAllRowsVisible(true);
+		grid.getStyle().set("--gantt-caption-grid-row-height", "40px");
 	}
 
 	private Gantt createGantt() {

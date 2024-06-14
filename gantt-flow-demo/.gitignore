@@ -21,4 +21,5 @@ pnpmfile.js
 pnpm-lock.yaml
 
 **/frontend/generated/
+**/src/main/bundles/
 /node_modules/

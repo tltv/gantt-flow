@@ -1044,7 +1044,10 @@ public class Gantt extends Component implements HasSize {
 					event.getSteps().forEach(step -> handleTreeDataAdd(treeData, step));
 					break;
 				case STEP_REMOVE:
-					event.getSteps().forEach(grid.getTreeData()::removeItem);
+					event.getSteps().forEach(step -> {
+						removeChildStepRecursively(getCaptionTreeGrid(), step);
+						grid.getTreeData().removeItem(step);
+					});
 					break;
 				case STEP_MOVE:
 					event.getSteps().forEach(step -> handleTreeDataMove(grid.getTreeData(), step));

@@ -27,24 +27,29 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.vaadin.tltv.gantt.element.StepElement;
 import org.vaadin.tltv.gantt.event.GanttClickEvent;
 import org.vaadin.tltv.gantt.event.GanttDataChangeEvent;
 import org.vaadin.tltv.gantt.event.StepClickEvent;
 import org.vaadin.tltv.gantt.event.StepMoveEvent;
 import org.vaadin.tltv.gantt.event.StepResizeEvent;
+import org.vaadin.tltv.gantt.event.GanttDataChangeEvent.DataEvent;
 import org.vaadin.tltv.gantt.model.GanttStep;
 import org.vaadin.tltv.gantt.model.Resolution;
 import org.vaadin.tltv.gantt.model.Step;
@@ -59,6 +64,9 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.hierarchy.TreeData;
+import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.shared.Registration;
 
@@ -80,7 +88,7 @@ import static java.util.Optional.ofNullable;
  * components.
  */
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "1.0.28")
+@NpmPackage(value = "tltv-gantt-element", version = "1.0.29")
 @NpmPackage(value = "tltv-timeline-element", version = "1.0.20")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
@@ -91,6 +99,7 @@ public class Gantt extends Component implements HasSize {
 	private Grid<Step> captionGrid;
 	private Registration captionGridDataChangeListener;
 	private Registration captionGridColumnResizeListener;
+	private final Set<ComponentEventListener<StepMoveEvent>> moveListeners = new HashSet<>();
 	
 	/**
 	 * Default contructor with default settings. Sets locale to match
@@ -98,6 +107,13 @@ public class Gantt extends Component implements HasSize {
 	 */
 	public Gantt() {
 		setupDefaults();
+		addListener(StepMoveEvent.class, event -> {
+			// dates and position are synchronized automatically to server side model
+			event.getAnyStep().setStartDate(event.getStart());
+			event.getAnyStep().setEndDate(event.getEnd());
+			moveStep(indexOf(event.getNewUid()), event.getAnyStep(), true);
+			fireMoveListeners(event);
+		});
 	}
 
 	/**
@@ -395,8 +411,9 @@ public class Gantt extends Component implements HasSize {
 		if(steps == null) {
 			return;
 		}
+		var list = steps.toList();
 		steps.forEach(this::appendStep);
-		fireDataChangeEvent();
+		fireDataChangeEvent(DataEvent.STEP_ADD, list.stream());
 	}
 	
 	/**
@@ -407,7 +424,7 @@ public class Gantt extends Component implements HasSize {
 	 */
 	public void addStep(Step step) {
 		appendStep(step);
-		fireDataChangeEvent();
+		fireDataChangeEvent(DataEvent.STEP_ADD, Stream.of(step));
 	}
 
 	/**
@@ -421,6 +438,12 @@ public class Gantt extends Component implements HasSize {
 				.get(indexOf(subStep.getOwner().getUid()));
 		ownerStepElement.getElement().appendChild(new StepElement(ensureUID(subStep)).getElement());
 	}
+
+	private void addSubStepElement(StepElement subStepElement) {
+		StepElement ownerStepElement = getStepElements().collect(Collectors.toList())
+				.get(indexOf(((SubStep) subStepElement.getModel()).getOwner().getUid()));
+		ownerStepElement.getElement().appendChild(subStepElement.getElement());
+	}
 	
 	/**
 	 * Add step component based on the given step descriptor. New component is moved
@@ -432,11 +455,17 @@ public class Gantt extends Component implements HasSize {
 	 * @param step  a step descriptor object for the new or existing component
 	 */
 	public void addStep(int index, Step step) {
+		addStep(index, step, true);
+	}
+
+	private void addStep(int index, Step step, boolean fireDataEvent) {
         if (contains(ensureUID(step))) {
             moveStep(index, step);
         } else {
         	getElement().insertChild(index, new StepElement(ensureUID(step)).getElement());
-        	fireDataChangeEvent();
+			if (fireDataEvent) {
+				fireDataChangeEvent(DataEvent.STEP_ADD, Stream.of(step));
+			}
         }
     }
 
@@ -449,10 +478,14 @@ public class Gantt extends Component implements HasSize {
 	 * @param anyStep step or sub step descriptor of the moved step
 	 */
 	public void moveStep(int toIndex, GanttStep anyStep) {
+		moveStep(toIndex, anyStep, false);
+	}
+
+	private void moveStep(int toIndex, GanttStep anyStep, boolean fromClient) {
 		if(anyStep.isSubstep()) {
 			moveSubStep(toIndex, (SubStep) anyStep);
 		} else {
-			moveStep(toIndex, (Step) anyStep);
+			moveStep(toIndex, (Step) anyStep, fromClient);
 		}
 	}
 	
@@ -467,6 +500,10 @@ public class Gantt extends Component implements HasSize {
 	 * @param step    step descriptor of the moved step
 	 */
     public void moveStep(int toIndex, Step step) {
+		moveStep(toIndex, step, false);
+	}
+
+	private void moveStep(int toIndex, Step step, boolean fromClient) {
         if (!contains(step)) {
             return;
         }
@@ -481,7 +518,7 @@ public class Gantt extends Component implements HasSize {
 			var tooltips = getStepElementOptional(moveStep.getUid()).map(StepElement::getTooltips).orElse(List.of());
 			var components = getStepElementOptional(moveStep.getUid()).map(StepElement::getChildren)
 					.orElse(Stream.empty()).toList();
-        	getStepElementOptional(moveStep.getUid()).ifPresent(StepElement::removeFromParent);
+			getStepElementOptional(moveStep.getUid()).ifPresent(StepElement::removeFromParent);
         	StepElement stepElement = new StepElement(moveStep);
         	subStepEements.forEach(subStepElement -> stepElement.getElement().appendChild(subStepElement.getElement()));
         	if(fromIndex <= toIndex) {
@@ -494,7 +531,9 @@ public class Gantt extends Component implements HasSize {
 			// and tooltips.
 			tooltips.forEach(stepElement::addTooltip);
 			stepElement.add(components);
-        	fireDataChangeEvent();
+			if(fromClient) {
+        		fireDataChangeEvent(DataEvent.STEP_MOVE, Stream.of(step));
+			}
         }
         updateSubStepsByMovedOwner(moveStep.getUid());
     }
@@ -572,8 +611,8 @@ public class Gantt extends Component implements HasSize {
 		if(steps == null) {
 			return;
 		}
-		steps.forEach(this::doRemoveStep);
-		fireDataChangeEvent();
+		var list = steps.toList();
+		list.forEach(step -> doRemoveStep(step, true));
 	}
 	
 	/**
@@ -583,7 +622,7 @@ public class Gantt extends Component implements HasSize {
 	 * @return boolean true if step or sub step was removed, false otherwise
 	 */	
 	public boolean removeAnyStep(String uid) {
-		return doRemoveAnyStep(uid);
+		return doRemoveAnyStep(uid, true);
 	}
 	
 	/**
@@ -593,7 +632,7 @@ public class Gantt extends Component implements HasSize {
 	 * @return boolean true if step or sub step was removed, false otherwise
 	 */
 	public boolean removeAnyStep(GanttStep step) {
-		return doRemoveAnyStep(step.getUid());
+		return doRemoveAnyStep(step.getUid(), true);
 	}
 	
 	/**
@@ -603,26 +642,21 @@ public class Gantt extends Component implements HasSize {
 	 * @return boolean true if step was removed, false otherwise
 	 */
 	public boolean removeStep(Step step) {
-		if (step == null) {
-			return false;
-		}
-		if(doRemoveStep(step)) {
-			fireDataChangeEvent();
-			return true;
-		}
-		return false;
+		return doRemoveStep(step, true);
 	}
 
-	private boolean doRemoveStep(Step step) {
-		return doRemoveAnyStep(step.getUid());
+	private boolean doRemoveStep(Step step, boolean fireDataEvent) {
+		return doRemoveAnyStep(step.getUid(), fireDataEvent);
 	}
 	
-	private boolean doRemoveAnyStep(String uid) {
+	private boolean doRemoveAnyStep(String uid, boolean fireDataEvent) {
 		var removedStepElement = getStepElement(uid);
 		if (removedStepElement != null) {
 			removedStepElement.removeFromParent();
 			if (removedStepElement.getModel().isSubstep()) {
 				refresh(((SubStep) removedStepElement.getModel()).getOwner().getUid());
+			} else if(fireDataEvent) {
+				fireDataChangeEvent(DataEvent.STEP_REMOVE, Stream.of((Step) removedStepElement.getModel()));
 			}
 			return true;
 		}
@@ -740,6 +774,13 @@ public class Gantt extends Component implements HasSize {
     public Stream<StepElement> getSubStepElements() {
 		return getStepElements().flatMap(step -> step.getChildren().filter(child -> child instanceof StepElement))
 				.map(StepElement.class::cast);
+	}
+
+	/**
+	 * Returns {@link SubStep} stream of all sub-steps.
+	 */
+	public Stream<SubStep> getSubSteps() {
+		return getSubStepElements().map(StepElement::getModel).map(SubStep.class::cast);
 	}
 
 	/**
@@ -912,7 +953,17 @@ public class Gantt extends Component implements HasSize {
 	}
 	
 	public Registration addStepMoveListener(ComponentEventListener<StepMoveEvent> listener) {
-		return addListener(StepMoveEvent.class, listener);
+		moveListeners.add(listener);
+		return new Registration() {
+			@Override
+			public void remove() {
+				moveListeners.remove(listener);
+			}
+		};
+	}
+
+	private void fireMoveListeners(StepMoveEvent event) {
+		moveListeners.forEach(listener -> listener.onComponentEvent(event));
 	}
 	
 	public Registration addStepResizeListener(ComponentEventListener<StepResizeEvent> listener) {
@@ -954,12 +1005,189 @@ public class Gantt extends Component implements HasSize {
 		refreshForHorizontalScrollbar();
 		return grid;
 	}
+
+	/**
+	 * Builds a new {@link TreeGrid} instance with a single column that renders text
+	 * based on the step caption. {@link TreeGrid} will be kept in sync with the Gantt
+	 * steps. Instance is available then with {@link #getCaptionGrid()}. This does
+	 * not attach component to any layout. 
+	 * 
+	 * @param header Header of the column
+	 * @return A new {@link TreeGrid} instance
+	 */
+	public TreeGrid<Step> buildCaptionTreeGrid(String header) {
+		removeCaptionGrid();
+		var grid = new TreeGrid<Step>();
+		this.captionGrid = grid;
+		grid.getStyle().set("--gantt-caption-grid-row-height", "30px");
+		grid.addClassName("gantt-caption-grid");
+		grid.addHierarchyColumn(Step::getCaption)
+				.setHeader(header).setResizable(true).setSortable(false);
+		captionGridColumnResizeListener = grid.addColumnResizeListener(event -> {
+			if (event.isFromClient()) {
+				refreshForHorizontalScrollbar();
+			}
+		});
+		TreeData<Step> treeData = new TreeData<>();
+		treeData.addRootItems(getStepsList());
+		var dataProvider = new TreeDataProvider<>(treeData);
+		grid.setDataProvider(dataProvider);
+		grid.addExpandListener(event -> {
+			addChildStepRecursively(grid, event.getItems(), new MutableInt());
+		});
+		grid.addCollapseListener(event -> {
+			removeChildStepRecursively(grid, event.getItems());
+		});
+		captionGridDataChangeListener = addDataChangeListener(event -> {
+			switch (event.getDataEvent()) {
+				case STEP_ADD:
+					event.getSteps().forEach(step -> handleTreeDataAdd(treeData, step));
+					break;
+				case STEP_REMOVE:
+					event.getSteps().forEach(grid.getTreeData()::removeItem);
+					break;
+				case STEP_MOVE:
+					event.getSteps().forEach(step -> handleTreeDataMove(grid.getTreeData(), step));
+					break;
+				default:
+					break;
+			}
+			grid.getDataProvider().refreshAll();
+			refreshForHorizontalScrollbar();
+		});
+		getElement().executeJs("this.registerScrollElement($0.$.table)", grid);
+		refreshForHorizontalScrollbar();
+		return grid;
+	}
 	
+	protected void handleTreeDataAdd(TreeData<Step> treeData, Step step) {
+		treeData.addRootItems(step);
+		int flatSiblingIndex = indexOf(step) - 1;
+		if (flatSiblingIndex >= 0) {
+			Step flatSibling = getStepsList().get(flatSiblingIndex);
+			if (getCaptionTreeGrid().isExpanded(flatSibling)) {
+				treeData.setParent(step, flatSibling);
+				treeData.moveAfterSibling(step, null);
+			} else {
+				treeData.setParent(step, treeData.getParent(flatSibling));
+				treeData.moveAfterSibling(step, flatSibling);
+			}
+		} else {
+			treeData.moveAfterSibling(step, null);
+		}
+	}
+
+	protected void handleTreeDataMove(TreeData<Step> treeData, Step step) {
+		Step oldParent = treeData.getParent(step);
+		Step newParent = null;
+		int index = indexOf(step);
+		if (index > 0) {
+			List<Step> flatSubTree = getFlatSubTreeRecursively(treeData, step);
+			Step sibling = getStepsList().get(index - 1);
+			if (!flatSubTree.contains(sibling)) {
+				if (Objects.equals(sibling, oldParent)) {
+					newParent = sibling;
+					sibling = null;
+				} else {
+					newParent = treeData.getParent(sibling);
+				}
+				treeData.setParent(step, newParent);
+				treeData.moveAfterSibling(step, sibling);
+			}
+		} else {
+			treeData.setParent(step, newParent);
+			treeData.moveAfterSibling(step, null);
+		}
+		if(getCaptionTreeGrid().isExpanded(step)) {
+			removeChildStepRecursively(getCaptionTreeGrid(), step);
+			expand(step);
+			// state tree changes are messed up now. DOM is correct. Need to reset it all.
+			reset();
+		}
+	}
+
+	private void reset() {
+		var allSteps = getStepElements().toList();
+		var allSubSteps = getSubStepElements().toList();
+		allSteps.forEach(s -> doRemoveStep((Step) s.getModel(), false));
+		allSteps.forEach(s -> getElement().appendChild(s.getElement()));
+		allSubSteps.forEach(this::addSubStepElement);
+	}
+
+	/**
+	 * Expands all child steps directed by the caption TreeGrid's hierarchical data source.
+	 */
+	public void expand(Step item) {
+		expand(List.of(item));
+	}
+
+	/**
+	 * Expands all child steps directed by the caption TreeGrid's hierarchical data source.
+	 */
+	public void expand(Collection<Step> items) {
+		if(getCaptionTreeGrid() == null) {
+			return;
+		}
+		addChildStepRecursively(getCaptionTreeGrid(), items, new MutableInt());
+	}
+
+	private void addChildStepRecursively(TreeGrid<Step> grid, Collection<Step> items, MutableInt index) {
+		items.forEach(item -> addChildStepRecursively(grid, item, index));
+	}
+
+	private void addChildStepRecursively(TreeGrid<Step> grid, Step item, MutableInt index) {
+		var dataProvider = grid.getDataProvider();
+		if (!dataProvider.hasChildren(item)) {
+			return;
+		}
+		if (index.getValue() == 0) {
+			index.setValue(getStepsList().indexOf(item) + 1);
+		}
+		for (Step child : grid.getTreeData().getChildren(item)) {
+			addStep(index.getValue(), child, false);
+			index.increment();
+			addChildStepRecursively(grid, child, index);
+		}
+	}
+
+	private List<Step> getFlatSubTreeRecursively(TreeData<Step> treeData, Step step) {
+		List<Step> steps = new ArrayList<>();
+		if (treeData.contains(step)) {
+			for (Step child : treeData.getChildren(step)) {
+				steps.add(child);
+				steps.addAll(getFlatSubTreeRecursively(treeData, child));
+			}
+		}
+		return steps;
+	}
+
+	/**
+	 * Remove all child steps directed by the TreeGrid's hierarchical data
+	 * source.
+	 */
+	private void removeChildStepRecursively(TreeGrid<Step> grid, Collection<Step> items) {
+		items.stream().forEach(item -> removeChildStepRecursively(grid, item));
+	}
+
+	/**
+	 * Remove all child steps directed by the TreeGrid's hierarchical data
+	 * source.
+	 */
+	private void removeChildStepRecursively(TreeGrid<Step> grid, Step step) {
+		var dataProvider = grid.getDataProvider();
+		if (dataProvider.hasChildren(step)) {
+			for (Step child : grid.getTreeData().getChildren(step)) {
+				doRemoveStep(child, false);
+				removeChildStepRecursively(grid, child);
+			}
+		}
+	}
+
 	/**
 	 * Remove caption {@link Grid} instance if it exists. Grid will not be kept in
 	 * sync with the Gantt after calling this. This does not detach component from
 	 * the layout. Synchronized Grid can be created with
-	 * {@link #buildCaptionGrid(String)}.
+	 * {@link #buildCaptionGrid(String)} or {@link #buildCaptionTreeGrid(String)}.
 	 */
 	public void removeCaptionGrid() {
 		if(captionGrid != null) {
@@ -973,12 +1201,22 @@ public class Gantt extends Component implements HasSize {
 	
 	/**
 	 * Get caption {@link Grid} instance or null if it's not set. See
-	 * {@link #buildCaptionGrid(String)}.
+	 * {@link #buildCaptionGrid(String)} and {@link #buildCaptionTreeGrid(String)}.
 	 * 
 	 * @return {@link Grid} instance or null
 	 */
 	public Grid<Step> getCaptionGrid() {
 		return captionGrid;
+	}
+
+	/**
+	 * Get caption {@link TreeGrid} instance or null if it's not set. See
+	 * {@link #buildCaptionTreeGrid(String)}.
+	 * 
+	 * @return {@link Grid} instance or null
+	 */
+	public TreeGrid<Step> getCaptionTreeGrid() {
+		return captionGrid instanceof TreeGrid ? (TreeGrid<Step>) captionGrid : null;
 	}
 	
 	private void refreshForHorizontalScrollbar() {
@@ -996,16 +1234,19 @@ public class Gantt extends Component implements HasSize {
 						const gridOverflowX = left || right; 
 						this._container.style.overflowX = (gridOverflowX) ? 'scroll' : 'auto'; 
 						if(self.isContentOverflowingHorizontally() && !gridOverflowX) { 
-							$0.$.scroller.style.height = 'calc(100% - ' + self.scrollbarWidth + 'px)'; 
+							$0.$.scroller.style.height = 'calc(100% - ' + self.scrollbarWidth + 'px)';
+							$0.$.scroller.style.minHeight = $0.$.scroller.style.height;
 						} else { 
-							$0.$.scroller.style.removeProperty('height'); 
+							$0.$.scroller.style.removeProperty('height');
+							$0.$.scroller.style.removeProperty('min-height'); 
 						}
 					})
 				""",
 				captionGrid);
 	}
 	
-	private void fireDataChangeEvent() {
-		fireEvent(new GanttDataChangeEvent(this));
+	private void fireDataChangeEvent(DataEvent eventType, Stream<Step> steps) {
+		fireEvent(new GanttDataChangeEvent(this, eventType, steps));
 	}
+	
 }

@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +41,7 @@ import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.timepicker.TimePicker;
+import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.dom.Style.Display;
 import com.vaadin.flow.dom.Style.Position;
 import com.vaadin.flow.router.Route;
@@ -50,6 +52,7 @@ public class GanttDemoView extends VerticalLayout {
 	private Gantt gantt;
 	private FlexLayout scrollWrapper;
 	private Grid<Step> grid;
+	private TreeGrid<Step> treeGrid;
 	
 	private DatePicker startDateField;
 	private DatePicker endDateField;
@@ -60,6 +63,8 @@ public class GanttDemoView extends VerticalLayout {
 	private int clickedBackgroundIndex;
 	private LocalDateTime clickedBackgroundDate;
 	private int stepCounter = 2;
+
+	private boolean addTreeData = true;
 
 	public GanttDemoView() {
 		setWidthFull();
@@ -87,6 +92,32 @@ public class GanttDemoView extends VerticalLayout {
 		grid.setWidth("30%");
 		grid.setAllRowsVisible(true);
 		grid.getStyle().set("--gantt-caption-grid-row-height", "40px");
+	}
+
+	private void buildCaptionTreeGrid() {
+		treeGrid = gantt.buildCaptionTreeGrid("Header");
+		treeGrid.setWidth("30%");
+		treeGrid.setAllRowsVisible(true);
+		treeGrid.getStyle().set("--gantt-caption-grid-row-height", "40px");
+
+		if(addTreeData) {
+			Step parentStep = createDefaultNewStep();
+			gantt.addStep(parentStep);
+			Step childStep = createDefaultNewStep();
+			childStep.setUid(UUID.randomUUID().toString()); // needed when adding to TreeData directly
+			childStep.setCaption("Child step A");
+			childStep.setStartDate(parentStep.getStartDate());
+			childStep.setEndDate(parentStep.getStartDate().plusDays(3));
+			treeGrid.getTreeData().addItem(parentStep, childStep);
+			childStep = createDefaultNewStep();
+			childStep.setUid(UUID.randomUUID().toString());
+			childStep.setCaption("Child step B");
+			childStep.setStartDate(parentStep.getStartDate().plusDays(3));
+			childStep.setEndDate(parentStep.getStartDate().plusDays(7));
+			treeGrid.getTreeData().addItem(parentStep, childStep);
+			treeGrid.expand(parentStep);
+		}
+		addTreeData = false;
 	}
 
 	private Gantt createGantt() {
@@ -137,11 +168,7 @@ public class GanttDemoView extends VerticalLayout {
 		gantt.addStepMoveListener(event -> {
 			Notification.show("Moved step : " + event.getAnyStep().getCaption());
 			
-			// dates and position are not synchronized automatically to server side model
-			event.getAnyStep().setStartDate(event.getStart());
-			event.getAnyStep().setEndDate(event.getEnd());
-			
-			gantt.moveStep(gantt.indexOf(event.getNewUid()), event.getAnyStep());
+			// dates and position are synchronized automatically to server side model
 		});
 		gantt.addStepResizeListener(event -> {
 			Notification.show("Resized step : " + event.getAnyStep().getCaption());
@@ -199,11 +226,37 @@ public class GanttDemoView extends VerticalLayout {
 			backgroundContextMenu.add(new Hr());
 			backgroundContextMenu.addItem("Remove step " + targetStep.getCaption(),
 					e -> onHandleRemoveStepContextMenuAction(targetStep.getUid()));
+			if (gantt.getCaptionTreeGrid() != null) {
+				backgroundContextMenu.add(new Hr());
+				backgroundContextMenu.addItem("TreeGrid: Add new child step for " + targetStep.getCaption(),
+						e -> onAddTreeGridChildStep(targetStep.getUid()));
+			}
 			backgroundContextMenu.add(new Hr());
 			backgroundContextMenu.add(createProgressEditor(gantt.getStepElement(targetStep.getUid())));
 		});
 	}
 	
+	private void onAddTreeGridChildStep(String targetStepUid) {
+		Step parentStep = gantt.getStep(targetStepUid);
+		Step childStep = createDefaultNewStep();
+		childStep.setUid(UUID.randomUUID().toString()); // needed when adding to TreeData directly
+		childStep.setCaption("Child Step "
+				+ (gantt.getCaptionTreeGrid().getTreeData().getChildren(parentStep).size() + 1));
+		childStep.setStartDate(parentStep.getStartDate());
+		childStep.setEndDate(parentStep.getStartDate().plusDays(7));
+		gantt.getCaptionTreeGrid().getTreeData().addItem(parentStep, childStep);
+		gantt.getCaptionTreeGrid().getDataProvider().refreshAll();
+
+		boolean firstChild = gantt.getCaptionTreeGrid().getTreeData().getChildren(parentStep).size() == 1;
+		if(firstChild) {
+			treeGrid.expand(parentStep);
+		} else if(gantt.getCaptionTreeGrid().isExpanded(parentStep)) {
+			// Gantt can't know what was added/removed in data provider, so we need to call
+			// expand to trigger expand event listener in Gantt.
+			gantt.expand(parentStep);
+		}
+	}
+
 	private void addDynamicSubStepContextMenu(StepElement stepElement) {
 		stepElement.addContextMenu((contextMenu, uid) -> {
 			contextMenu.removeAll();
@@ -449,7 +502,13 @@ public class GanttDemoView extends VerticalLayout {
 		showMonth.setChecked(gantt.isMonthRowVisible());
 		
 		MenuItem showCaptionGrid = menuView.getSubMenu().addItem("Show Caption Grid");
+		MenuItem showCaptionTreeGrid = menuView.getSubMenu().addItem("Show Caption TreeGrid");
 		showCaptionGrid.addClickListener(event -> {
+			if(treeGrid != null) {
+				treeGrid.removeFromParent();
+				treeGrid = null;
+				showCaptionTreeGrid.setChecked(false);
+			}
 			if(event.getSource().isChecked()) {
 				buildCaptionGrid();
 				scrollWrapper.addComponentAsFirst(grid);
@@ -461,7 +520,26 @@ public class GanttDemoView extends VerticalLayout {
 			setSize(this.size);
 		});
 		showCaptionGrid.setCheckable(true);
-		showCaptionGrid.setChecked(grid.isVisible());
+		showCaptionGrid.setChecked(grid != null && grid.isVisible());
+
+		showCaptionTreeGrid.addClickListener(event -> {
+			if(grid != null) {
+				grid.removeFromParent();
+				grid = null;
+				showCaptionGrid.setChecked(false);
+			}
+			if(event.getSource().isChecked()) {
+				buildCaptionTreeGrid();
+				scrollWrapper.addComponentAsFirst(treeGrid);
+			} else {
+				gantt.removeCaptionGrid();
+				scrollWrapper.remove(treeGrid);
+				treeGrid = null;
+			}
+			setSize(this.size);
+		});
+		showCaptionTreeGrid.setCheckable(true);
+		showCaptionTreeGrid.setChecked(treeGrid != null && treeGrid.isVisible());
 
 		MenuItem menuEdit = menu.addItem("Edit");
 		
@@ -498,37 +576,55 @@ public class GanttDemoView extends VerticalLayout {
 		case FULL_SIZE:
 			setSizeFull();
 			gantt.setWidth("70%");
-			grid.setWidth("30%");
+			setCaptionGridWidth("30%");
 			gantt.setHeight("100%");
-			grid.setHeight("100%");
+			setCaptionGridHeight("100%");
 			setFlexGrow(1, scrollWrapper);
 			break;
 		case FULL_WIDTH:
 			setWidthFull();
 			setHeight(null);
 			gantt.setWidth("70%");
-			grid.setWidth("30%");
+			setCaptionGridWidth("30%");
 			gantt.setHeight(null);
-			grid.setHeight(null);
+			setCaptionGridHeight(null);
 			grid.setAllRowsVisible(true);
 			setFlexGrow(0, scrollWrapper);
 			break;
 		case HALF_WIDTH:
 			setSizeFull();
 			gantt.setWidth("40%");
-			grid.setWidth("10%");
+			setCaptionGridWidth("10%");
 			gantt.setHeight("100%");
-			grid.setHeight("100%");
+			setCaptionGridHeight("100%");
 			setFlexGrow(1, scrollWrapper);
 			break;
 		case HALF_HEIGHT:
 			setSizeFull();
 			gantt.setWidth("70%");
-			grid.setWidth("30%");
+			setCaptionGridWidth("30%");
 			gantt.setHeight("50%");
-			grid.setHeight("50%");
+			setCaptionGridHeight("50%");
 			setFlexGrow(1, scrollWrapper);
 			break;
+		}
+	}
+
+	private void setCaptionGridWidth(String width) {
+		if(grid != null) {
+			grid.setWidth(width);
+		}
+		if(treeGrid != null) {
+			treeGrid.setWidth(width);
+		}
+	}
+
+	private void setCaptionGridHeight(String height) {
+		if(grid != null) {
+			grid.setHeight(height);
+		}
+		if(treeGrid != null) {
+			treeGrid.setHeight(height);
 		}
 	}
 	
@@ -557,7 +653,7 @@ public class GanttDemoView extends VerticalLayout {
 		step.setEndDate(LocalDateTime.of(2020, 4, 14, 0, 0));
 		return step;
 	}
-	
+
 	private SubStep createDefaultSubStep(String ownerUid) {
 		var owner = gantt.getStep(ownerUid);
 		SubStep substep = new SubStep(owner);

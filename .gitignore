@@ -22,3 +22,4 @@ pnpm-lock.yaml
 
 **/frontend/generated/
 vite.generated.ts
+node_modules

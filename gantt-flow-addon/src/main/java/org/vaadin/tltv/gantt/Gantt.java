@@ -88,7 +88,7 @@ import static java.util.Optional.ofNullable;
  * components.
  */
 @Tag("gantt-element")
-@NpmPackage(value = "tltv-gantt-element", version = "1.0.29")
+@NpmPackage(value = "tltv-gantt-element", version = "1.0.30")
 @NpmPackage(value = "tltv-timeline-element", version = "1.0.20")
 @JsModule("tltv-gantt-element/dist/src/gantt-element.js")
 @CssImport(value = "gantt-grid.css", themeFor = "vaadin-grid")
@@ -511,26 +511,18 @@ public class Gantt extends Component implements HasSize {
         int fromIndex = indexOf(step);
         Step moveStep = step;
         if (!targetStepUid.equals(moveStep.getUid())) {
-        	var subStepEements = getSubStepElements(moveStep.getUid());
-        	// memorize context menu builders before removing old element with builders.
-        	var contextMenuBuilders = getStepElementOptional(moveStep.getUid()).map(StepElement::getContextMenuBuilders).orElse(List.of());
-			// and also tooltips.
-			var tooltips = getStepElementOptional(moveStep.getUid()).map(StepElement::getTooltips).orElse(List.of());
-			var components = getStepElementOptional(moveStep.getUid()).map(StepElement::getChildren)
-					.orElse(Stream.empty()).toList();
-			getStepElementOptional(moveStep.getUid()).ifPresent(StepElement::removeFromParent);
-        	StepElement stepElement = new StepElement(moveStep);
-        	subStepEements.forEach(subStepElement -> stepElement.getElement().appendChild(subStepElement.getElement()));
-        	if(fromIndex <= toIndex) {
-        		getElement().insertChild(indexOf(targetStepUid) + 1, stepElement.getElement());
-        	} else {
-        		getElement().insertChild(indexOf(targetStepUid), stepElement.getElement());
-        	}
-        	// add context menu builders back in the end.
-			contextMenuBuilders.stream().forEach(stepElement::addContextMenu);
-			// and tooltips.
-			tooltips.forEach(stepElement::addTooltip);
-			stepElement.add(components);
+
+			if (getCaptionTreeGrid() != null) {
+				List<Step> flatSubTree = getFlatSubTreeRecursively(getCaptionTreeGrid().getTreeData(), step);
+				if (flatSubTree.contains(getStep(targetStepUid))) {
+					// reset to old position
+					doMoveStep(indexOf(moveStep.getUid()), moveStep.getUid(), moveStep);
+					updateSubStepsByMovedOwner(moveStep.getUid());
+					return;
+				}
+			}
+
+			doMoveStep(fromIndex, targetStepUid, moveStep);
 			if(fromClient) {
         		fireDataChangeEvent(DataEvent.STEP_MOVE, Stream.of(step));
 			}
@@ -538,6 +530,32 @@ public class Gantt extends Component implements HasSize {
         updateSubStepsByMovedOwner(moveStep.getUid());
     }
     
+	private void doMoveStep(int fromIndex, String targetStepUid, Step moveStep) {
+		var toIndex = indexOf(targetStepUid);
+		var subStepEements = getSubStepElements(moveStep.getUid());
+		// memorize context menu builders before removing old element with builders.
+		var contextMenuBuilders = getStepElementOptional(moveStep.getUid()).map(StepElement::getContextMenuBuilders).orElse(List.of());
+		// and also tooltips.
+		var tooltips = getStepElementOptional(moveStep.getUid()).map(StepElement::getTooltips).orElse(List.of());
+		var components = getStepElementOptional(moveStep.getUid()).map(StepElement::getChildren)
+				.orElse(Stream.empty()).toList();
+		getStepElementOptional(moveStep.getUid()).ifPresent(StepElement::removeFromParent);
+		StepElement stepElement = new StepElement(moveStep);
+		subStepEements.forEach(subStepElement -> stepElement.getElement().appendChild(subStepElement.getElement()));
+		if(targetStepUid.equals(moveStep.getUid())) {
+			getElement().insertChild(toIndex, stepElement.getElement());
+		} else if(fromIndex <= toIndex) {
+			getElement().insertChild(indexOf(targetStepUid) + 1, stepElement.getElement());
+		} else {
+			getElement().insertChild(indexOf(targetStepUid), stepElement.getElement());
+		}
+		// add context menu builders back in the end.
+		contextMenuBuilders.stream().forEach(stepElement::addContextMenu);
+		// and tooltips.
+		tooltips.forEach(stepElement::addTooltip);
+		stepElement.add(components);
+	}
+
 	/**
 	 * Move given existing substep to the given index. Index is based on the state
 	 * at the moment when method is called. Moved substep component is removed and
@@ -1084,9 +1102,10 @@ public class Gantt extends Component implements HasSize {
 		Step oldParent = treeData.getParent(step);
 		Step newParent = null;
 		int index = indexOf(step);
+		Step sibling = null;
 		if (index > 0) {
 			List<Step> flatSubTree = getFlatSubTreeRecursively(treeData, step);
-			Step sibling = getStepsList().get(index - 1);
+			sibling = getStepsList().get(index - 1);
 			if (!flatSubTree.contains(sibling)) {
 				if (Objects.equals(sibling, oldParent)) {
 					newParent = sibling;
@@ -1096,14 +1115,31 @@ public class Gantt extends Component implements HasSize {
 				}
 				treeData.setParent(step, newParent);
 				treeData.moveAfterSibling(step, sibling);
+			} else {
+				sibling = null;
 			}
 		} else {
 			treeData.setParent(step, newParent);
 			treeData.moveAfterSibling(step, null);
 		}
-		if(getCaptionTreeGrid().isExpanded(step)) {
+		// This is a messy way to sync state tree for updated DOM tree.
+		// First it updates the state tree in correct order by removing elements and adding elements, 
+		// then it removes all steps and adds them back to avoid processing previous changes in incorrect order in client side.
+		boolean isStepExpanded = getCaptionTreeGrid().isExpanded(step);
+		boolean isSiblingStepExpanded = sibling != null && getCaptionTreeGrid().isExpanded(sibling);
+		if(isStepExpanded) {
 			removeChildStepRecursively(getCaptionTreeGrid(), step);
+		}
+		if(isSiblingStepExpanded) {
+			removeChildStepRecursively(getCaptionTreeGrid(), sibling);
+		}
+		if(isStepExpanded) {
 			expand(step);
+		}
+		if(isSiblingStepExpanded) {
+			expand(sibling);
+		}
+		if(isStepExpanded) {
 			// state tree changes are messed up now. DOM is correct. Need to reset it all.
 			reset();
 		}
@@ -1116,7 +1152,6 @@ public class Gantt extends Component implements HasSize {
 		allSteps.forEach(s -> getElement().appendChild(s.getElement()));
 		allSubSteps.forEach(this::addSubStepElement);
 	}
-
 	/**
 	 * Expands all child steps directed by the caption TreeGrid's hierarchical data source.
 	 */

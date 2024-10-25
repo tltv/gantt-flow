@@ -247,10 +247,9 @@ public class GanttDemoView extends VerticalLayout {
 		gantt.getCaptionTreeGrid().getTreeData().addItem(parentStep, childStep);
 		gantt.getCaptionTreeGrid().getDataProvider().refreshAll();
 
-		boolean firstChild = gantt.getCaptionTreeGrid().getTreeData().getChildren(parentStep).size() == 1;
-		if(firstChild) {
+		if(!gantt.getCaptionTreeGrid().isExpanded(parentStep)) {
 			treeGrid.expand(parentStep);
-		} else if(gantt.getCaptionTreeGrid().isExpanded(parentStep)) {
+		} else {
 			// Gantt can't know what was added/removed in data provider, so we need to call
 			// expand to trigger expand event listener in Gantt.
 			gantt.expand(parentStep);

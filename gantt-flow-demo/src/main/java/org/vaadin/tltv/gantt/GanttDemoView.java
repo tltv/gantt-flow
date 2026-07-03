@@ -182,17 +182,17 @@ public class GanttDemoView extends VerticalLayout {
 			}
 		});
 		
-		// Add tooltip for step1 
+//		// Add tooltip for step1
 		gantt.getStepElement(step1.getUid()).addTooltip("Tooltip for " + step1.getCaption());
-		// and sub step A
+//		// and sub step A
 		gantt.getStepElement(subStepA.getUid()).addTooltip("Tooltip for " + subStepA.getCaption());
-
-		// Add progress bar for step1
+//
+//		// Add progress bar for step1
 		gantt.getStepElement(step1.getUid()).add(createProgressBar(30));
-
+//
 		// Add dynamic context menu for gantt background. Clicked index is registered via addGanttClickListener and addStepClickListener.
 		addDynamicBackgroundContextMenu(gantt);
-        
+
 		// Add dynamic context menu for sub steps
 		addDynamicSubStepContextMenu(gantt.getStepElement(subStepA.getUid()));
 		addDynamicSubStepContextMenu(gantt.getStepElement(subStepB.getUid()));
@@ -587,7 +587,9 @@ public class GanttDemoView extends VerticalLayout {
 			setCaptionGridWidth("30%");
 			gantt.setHeight(null);
 			setCaptionGridHeight(null);
-			grid.setAllRowsVisible(true);
+			if(grid != null) {
+				grid.setAllRowsVisible(true);
+			}
 			setFlexGrow(0, scrollWrapper);
 			break;
 		case HALF_WIDTH:

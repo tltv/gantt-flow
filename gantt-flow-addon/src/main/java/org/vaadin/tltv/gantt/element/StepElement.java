@@ -2,8 +2,10 @@ package org.vaadin.tltv.gantt.element;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -152,5 +154,17 @@ public class StepElement extends Component implements HasComponents {
 	/** Return all tooltips added to this step with addTooltip methods. */
 	public List<Tooltip> getTooltips() {
 		return Collections.unmodifiableList(this.tooltips);
+	}
+
+	@Override
+	public void add(Collection<Component> components) {
+		for (Component component : components) {
+			Objects.requireNonNull(component,
+					"Component to add cannot be null");
+			if (!(component instanceof StepElement) && component.getElement().getAttribute("slot") == null) {
+				component.getElement().setAttribute("slot", "step-content");
+			}
+		}
+		HasComponents.super.add(components);
 	}
 }

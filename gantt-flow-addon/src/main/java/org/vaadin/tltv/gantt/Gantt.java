@@ -584,7 +584,7 @@ public class Gantt extends Component implements HasSize {
 		if (!targetStepUid.equals(moveStep.getUid())) {
 			removeSubStepFromSignal(subStep);
 			subStep.setOwner(getStep(targetStepUid));
-			subStepsSignals.get(targetStepUid).insertLast(subStep);
+			subStepsSignals.computeIfAbsent(targetStepUid, k -> new ListSignal<>()).insertLast(subStep);
 		}
 		subStep.updateOwnerDatesBySubStep();
 		stepElement.refresh();

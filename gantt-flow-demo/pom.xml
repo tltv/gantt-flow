@@ -6,7 +6,7 @@
     <artifactId>gantt-flow-demo</artifactId>
     <name>Gantt Flow Add-on Demo</name>
     <version>25.1.0</version>
-    <packaging>jar</packaging>
+    <packaging>war</packaging>
 
   
     <properties>
@@ -14,7 +14,6 @@
         <maven.compiler.target>21</maven.compiler.target>
         <vaadin.version>25.1.9</vaadin.version>
         <jetty.version>12.1.4</jetty.version>
-        <failOnMissingWebXml>false</failOnMissingWebXml>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     
@@ -82,6 +81,7 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-dev</artifactId>
+            <optional>true</optional>
         </dependency>
          <dependency>
             <groupId>org.vaadin.addons.tltv.gantt</groupId>
@@ -101,19 +101,13 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
                 <configuration>
-                    <archive>
-                        <index>true</index>
-                        <manifest>
-                            <addClasspath>false</addClasspath>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Vaadin-Package-Version>1</Vaadin-Package-Version>
-                        </manifestEntries>
-                    </archive>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
             <plugin>
@@ -124,6 +118,7 @@
                     <execution>
                         <goals>
                             <goal>prepare-frontend</goal>
+                            <goal>build-frontend</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -134,44 +129,25 @@
                 <version>${jetty.version}</version>
                 <configuration>
                     <scan>2</scan>
-                    <supportedPackagings>
-                        <supportedPackaging>jar</supportedPackaging>
-                    </supportedPackagings>
+                    <webApp>
+                        <allowDuplicateFragmentNames>true</allowDuplicateFragmentNames>
+                    </webApp>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 
     <profiles>
- 
-        <!-- Run (demo) in production mode-->
         <profile>
-            <id>production</id>
-            <properties>
-                <vaadin.productionMode>true</vaadin.productionMode>
-            </properties>
+            <id>development</id>
             <dependencies>
+                <!-- Include development dependencies, non-optional needed  in certain test setups -->
                 <dependency>
                     <groupId>com.vaadin</groupId>
-                    <artifactId>flow-server-production-mode</artifactId>
+                    <artifactId>vaadin-dev</artifactId>
+                    <optional>false</optional>
                 </dependency>
             </dependencies>
-            
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.vaadin</groupId>
-                        <artifactId>vaadin-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>build-frontend</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
     </profiles>

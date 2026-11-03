@@ -40,13 +40,15 @@ Latest version and instructions are availabe in Vaadin Directory: https://vaadin
 Building the component and demo in development mode:
 1. Run `mvn clean install`
 
-Building the component and demo in production mode:
-1. Run `mvn clean install -Pproduction`
-
-Starting the gantt-flow-demo server:
+Starting the gantt-flow-demo server in development mode:
 1. `cd gantt-flow-demo`
 2. Run `mvn jetty:run`
 3. Open http://localhost:8080 in the browser.
+
+Building the component and demo in production mode and running it:
+1. Run `mvn package`
+2. `cd gantt-flow-demo`
+3. Run `mvn jetty:run-war`
 
 Building deliverable for Vaadin Directory:
 1. `cd gantt-flow-addon`

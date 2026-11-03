@@ -7,6 +7,10 @@ Multi-module Maven project with two modules: gantt-flow-addon and gantt-flow-dem
 - `gantt-flow-addon` contains add-on sources build into JAR deliverable.
 - `gantt-flow-demo` contains demo application build into WAR package.
 
+# Demo
+
+https://gantt-flow.onrender.com/
+
 # Example
 
 ```java

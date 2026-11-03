@@ -45,6 +45,11 @@ Starting the gantt-flow-demo server in development mode:
 2. Run `mvn jetty:run`
 3. Open http://localhost:8080 in the browser.
 
+Running the demo in Docker from the project root:
+1. Build the image: `docker build -f gantt-flow-demo/Dockerfile -t gantt-flow-demo .`
+2. Start the container: `docker run --rm -p 10000:10000 gantt-flow-demo`
+3. Open http://localhost:10000 in the browser.
+
 Building the component and demo in production mode and running it:
 1. Run `mvn package`
 2. `cd gantt-flow-demo`

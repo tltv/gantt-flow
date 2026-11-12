@@ -1,0 +1,84 @@
+name: PR Validation
+
+# This workflow runs on every pull request and blocks merging until tests pass.
+# It detects the base branch and uses the appropriate JDK version via inline expressions.
+#   - v23 → JDK 11 (legacy)
+#   - main, v24, or any other → JDK 21
+
+on:
+  pull_request_target:
+    branches:
+      - v23
+      - main
+      - v24
+      - v25.0
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - 'CHANGELOG.md'
+      - '*.md'
+      - '.gitignore'
+
+jobs:
+  validate-pr-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # --- Step 1: Checkout code (head of PR branch) ---
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      # --- Step 2: Determine JDK version via inline ternary expression ---
+      # If base branch is v23 → use Java 11, otherwise use Java 21.
+      - name: Set up JDK environment
+        id: java-setup
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          cache: maven
+          java-version: ${{
+            github.event.pull_request.base.ref == 'v23' && '11' || '21'
+          }}
+
+      # --- Step 3: Build and test the addon module (full tests) ---
+      - name: Build and test gantt-flow-addon (PR branch)
+        working-directory: ./gantt-flow-addon
+        run: |
+          echo "Building on ref: ${{ github.event.pull_request.head.sha }}"
+          echo "Base branch: ${{ github.event.pull_request.base.ref }}"
+          echo "JDK version: ${{ steps.java-setup.outputs.java-version || '21' }}"
+          mvn clean install
+
+      # --- Step 4: Compile demo module (fast integration check) ---
+      - name: Compile gantt-flow-demo (integration check)
+        working-directory: ./gantt-flow-demo
+        run: |
+          echo "Compiling demo to verify integration with addon"
+          mvn clean compile -DskipTests
+
+  full-verification-on-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: validate-pr-branch
+    if: |
+       github.event_name == 'push' &&
+       github.ref == 'refs/heads/main' &&
+       github.event.after != github.event.before
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Full Maven verification (main branch)
+        run: |
+          mvn clean verify -B

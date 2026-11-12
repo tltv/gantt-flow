@@ -40,7 +40,7 @@ jobs:
         with:
           distribution: 'temurin'
           cache: maven
-          java-version: '${{ github.event.pull_request.base.ref == "v23" && "11" || "21" }}'
+          java-version: ${{ github.event.pull_request.base.ref == "v23" && "11" || "21" }}
 
       # --- Step 3: Build and test the addon module (full tests) ---
       - name: Build and test gantt-flow-addon (PR branch)
